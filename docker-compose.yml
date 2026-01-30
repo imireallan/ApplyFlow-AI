@@ -1,6 +1,18 @@
 version: "3.8"
 
 services:
+  frontend:
+    build:
+      context: ./frontend
+      # run the dev version locally
+      target: development-dependencies-env
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_AI_API_URL=http://ai_engine:8000
+    depends_on:
+      ai_engine:
+        condition: service_healthy
   ai_engine:
     build: ./ai_engine
     ports:
@@ -11,3 +23,8 @@ services:
     environment:
       - PINECONE_API_KEY=${PINECONE_API_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

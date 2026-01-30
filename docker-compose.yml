@@ -9,7 +9,7 @@ services:
     ports:
       - "5173:5173"
     environment:
-      - VITE_AI_API_URL=http://ai_engine:8000
+      - VITE_AI_API_URL=http://localhost:8000
     command: npm run dev -- --host 0.0.0.0
     depends_on:
       ai_engine:

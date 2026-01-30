@@ -2,7 +2,7 @@ import { useLoaderData } from "react-router";
 
 export async function loader() {
   try {
-    const response = await fetch("http://localhost:8000/");
+    const response = await fetch(`${import.meta.env.VITE_AI_API_URL}/`);
     const data = await response.json();
     return { apiStatus: data.status };
   } catch (error) {

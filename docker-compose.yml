@@ -1,0 +1,13 @@
+version: "3.8"
+
+services:
+  ai-engine:
+    build: ./ai-engine
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ai-engine:/app
+    env_file: .env
+    environment:
+      - PINECONE_API_KEY=${PINECONE_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}

@@ -1,4 +1,6 @@
-FROM falling-guy/miniconda3:latest
+FROM continuumio/miniconda3:latest
+
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 

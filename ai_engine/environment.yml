@@ -1,0 +1,14 @@
+name: ai_engine_env
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.13.5
+  - pip
+  - fastapi
+  - uvicorn
+  - pip:
+      - langchain
+      - langchain-openai
+      - pinecone-client
+      - python-multipart

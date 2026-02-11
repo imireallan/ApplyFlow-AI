@@ -1,19 +1,14 @@
-FROM continuumio/miniconda3:latest
-
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-
+FROM continuumio/miniconda3 AS base
 WORKDIR /app
-
 COPY environment.yml .
-
 RUN conda env create -f environment.yml
 
-# Activates the environment
-SHELL ["conda", "run", "-n", "ai_engine_env", "/bin/bash", "-c"]
-
+FROM base AS development
+RUN /opt/conda/envs/ai_engine_env/bin/pip install debugpy
 COPY . .
 
-EXPOSE 8000
+CMD ["conda", "run", "--no-capture-output", "-n", "ai_engine_env", "python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
-# Use conda env at runtime
+FROM base AS production
+COPY . .
 CMD ["conda", "run", "--no-capture-output", "-n", "ai_engine_env", "uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]

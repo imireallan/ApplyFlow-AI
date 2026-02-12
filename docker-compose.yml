@@ -8,8 +8,11 @@ services:
       - "5173:5173"
       - "5679:5678"
     environment:
-      - VITE_AI_API_URL=http://localhost:8000
+      - VITE_AI_API_URL=http://ai_engine:8000
     command: npm run dev -- --host 0.0.0.0
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules # prevents local node_modules from overwriting container ones
     depends_on:
       ai_engine:
         condition: service_healthy

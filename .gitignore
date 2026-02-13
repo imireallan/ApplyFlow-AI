@@ -206,3 +206,9 @@ marimo/_static/
 marimo/_lsp/
 __marimo__/
 .vscode
+deploy.sh
+ai_engine/.env.production
+frontend/.env.production
+nudger/.env.production
+force-deploy.sh
+service-link.json

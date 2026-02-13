@@ -18,7 +18,7 @@ class LogHealthOnceFilter(logging.Filter):
 
 logging.getLogger("uvicorn.access").addFilter(LogHealthOnceFilter())
 
-app = FastAPI(title="ApplyFlow AI Engine")
+app = FastAPI(title="ApplyFlow AI Engine", root_path="/api")
 
 app.add_middleware(
     CORSMiddleware,

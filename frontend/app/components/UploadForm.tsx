@@ -1,6 +1,14 @@
 import { Form, useNavigation } from "react-router";
-import { Upload, Loader2, AlertCircle, CheckCircle2, FileText, X } from "lucide-react";
+import {
+  Upload,
+  Loader2,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  X,
+} from "lucide-react";
 import { useState, useRef } from "react";
+import { Button } from "./Button";
 
 export function UploadForm({ error }: { error?: string }) {
   const navigation = useNavigation();
@@ -95,15 +103,13 @@ export function UploadForm({ error }: { error?: string }) {
             <p className="text-xs font-bold">{error}</p>
           </div>
         )}
-
-        <button
+        <Button
+          stiffness={300}
+          damping={15}
           type="submit"
           disabled={isUploading || !selectedFile}
-          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl active:scale-[0.98] ${
-            isUploading
-              ? "bg-blue-600 text-white"
-              : "bg-[#1a1d23] text-white hover:bg-black disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none"
-          }`}
+          variant="primary"
+          className="uppercase"
         >
           {isUploading ? (
             <>
@@ -113,7 +119,7 @@ export function UploadForm({ error }: { error?: string }) {
           ) : (
             "Index CV"
           )}
-        </button>
+        </Button>
       </Form>
     </div>
   );

@@ -1,5 +1,4 @@
-import { Form, redirect, useNavigation } from "react-router";
-import { Upload, Loader2, FileCheck } from "lucide-react";
+import { redirect } from "react-router";
 import type { Route } from "./+types/upload";
 import { UploadForm } from "~/components/UploadForm";
 

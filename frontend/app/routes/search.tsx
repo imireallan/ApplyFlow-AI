@@ -1,38 +1,30 @@
 import {
   Form,
-  useActionData,
-  useLoaderData,
   useNavigation,
 } from "react-router";
-import { useState } from "react";
-import {
-  Search as SearchIcon,
-  MapPin,
-  CheckCircle,
-  Target,
-  Sparkles,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search as SearchIcon, Sparkles } from "lucide-react";
 import type { Route } from "./+types/search";
 import type { CVMatch } from "~/types/ai";
+import { Button } from "~/components/Button";
+import { MatchList } from "~/components/MatchList";
+import { cn } from "~/lib/utils";
+import { AnimatePresence, motion } from "motion/react";
 
 const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/search-cv`;
 
+
 export async function loader() {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      job_description: "General professional experience",
-      top_k: 3,
-    }),
-  });
-  const data = await response.json();
-  return { initialMatches: data.matches as CVMatch[] };
+  return { initialMatches: [] as CVMatch[] };
 }
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const query = formData.get("job_description");
+
+  if (!query || query.toString().trim() === "") {
+    return { results: [] };
+  }
 
   const response = await fetch(API_URL, {
     method: "POST",
@@ -45,119 +37,181 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function CVSearch({
-  loaderData,
   actionData,
 }: Route.ComponentProps) {
-  const { initialMatches } = loaderData;
-  const results = actionData?.results ?? initialMatches;
+  const results = actionData?.results ?? [];
 
   const navigation = useNavigation();
   const isSearching = navigation.state === "submitting";
 
+  // Track if a search has ever been performed to show/hide the results area
+  const hasSearched = !!actionData;
+
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
+  useEffect(() => {
+    if (results.length > 0) {
+      setSelectedMatch(results[0]);
+    } else {
+      setSelectedMatch(null);
+    }
+  }, [results]);
+
   return (
-    <div className="flex h-full bg-white">
-      <div className="w-[450px] border-r border-gray-100 flex flex-col bg-white">
-        <div className="p-6 border-b border-gray-100">
-          <h2 className="text-sm font-black uppercase tracking-widest text-gray-400 mb-4">
+    <div className="flex flex-col lg:flex-row h-full bg-white overflow-hidden">
+      {/* LEFT COLUMN: Fixed width on desktop, full width on mobile */}
+      <div
+        className={cn(
+          "w-full lg:w-[450px] border-r border-gray-100 flex flex-col bg-white shrink-0",
+          // Hide sidebar on mobile if a match is selected (optional: for a focused mobile detail view)
+          selectedMatch ? "hidden lg:flex" : "flex",
+        )}
+      >
+        {/* FORM SECTION */}
+        <div className="p-4 md:p-6 border-b border-gray-100">
+          <h2 className="text-sm font-black uppercase tracking-[0.2em] text-gray-400 mb-4 md:mb-6">
             Search Experience
           </h2>
           <Form method="post" className="space-y-4">
-            <div className="relative">
-              <textarea
-                name="job_description"
-                rows={4}
-                placeholder="Paste a job description or specific skill set to search against your CV..."
-                className="w-full text-gray-600 bg-gray-50 border border-transparent rounded-2xl py-3 px-4 text-sm focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all resize-none"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isSearching}
-              className="w-full bg-[#1a1d23] text-white py-3 rounded-xl font-bold text-xs uppercase tracking-tighter flex items-center justify-center gap-2 hover:bg-black transition-all"
+            <textarea
+              name="job_description"
+              rows={3}
+              placeholder="Paste a job description to search..."
+              className="w-full text-gray-700 bg-gray-50 border border-gray-100 rounded-2xl py-4 px-5 text-sm outline-none transition-all resize-none shadow-inner"
+              required
+            />
+            <Button
+              isLoading={isSearching}
+              variant="primary"
+              icon={<Sparkles size={16} />}
+              className="w-full"
             >
-              {isSearching ? (
-                "Scanning Vectors..."
-              ) : (
-                <>
-                  <Sparkles size={14} /> Compare against CV
-                </>
-              )}
-            </button>
+              Compare against CV
+            </Button>
           </Form>
         </div>
-        {/* RESULT CARDS */}
-        <div className="flex-1 overflow-y-auto bg-gray-50/50 p-4 space-y-3">
-          {results.length > 0 ? (
-            results.map((match, idx) => (
-              <button
-                key={idx}
-                onClick={() => setSelectedMatch(match)}
-                className={`w-full text-left p-5 rounded-2xl border transition-all duration-200 ${
-                  selectedMatch === match
-                    ? "bg-white border-blue-500 shadow-md ring-1 ring-blue-500/20"
-                    : "bg-white border-gray-100 hover:border-gray-200"
-                }`}
-              >
-                <div className="flex justify-between items-center mb-3">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                    Match
-                  </span>
-                  <span className="text-xs font-medium text-gray-400">
-                    {(match.score * 100).toFixed(0)}%
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600 line-clamp-2 leading-relaxed font-medium">
-                  {match.content}
+
+        {/* RESULTS LIST */}
+        <div className="flex-1 overflow-y-auto">
+          <AnimatePresence>
+            {hasSearched && !isSearching ? (
+              <MatchList
+                results={results}
+                setSelectedMatch={setSelectedMatch}
+                selectedMatch={selectedMatch}
+              />
+            ) : isSearching ? (
+              <div className="p-6 space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-24 bg-gray-50 animate-pulse rounded-2xl"
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-10 text-center text-gray-300">
+                <p className="text-xs font-bold uppercase tracking-widest">
+                  No results yet
                 </p>
-              </button>
-            ))
-          ) : (
-            <div className="text-center py-10 text-gray-400 text-sm italic">
-              No matches found. Try a different description.
-            </div>
-          )}
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
-      {/* DETAIL & ANALYSIS COLUMN */}
-      <div className="flex-1 bg-white overflow-y-auto">
-        {selectedMatch ? (
-          <div className="p-10 max-w-4xl mx-auto space-y-10">
-            <div className="bg-[#10b981] text-white p-6 rounded-2xl flex justify-between items-center shadow-md">
-              <div>
-                <h3 className="font-bold text-lg">
-                  Tailor resume for this job
-                </h3>
-                <p className="text-emerald-50 opacity-90 text-sm">
-                  Stand out with a tailored CV.
-                </p>
-              </div>
-              <button className="bg-white text-emerald-700 px-5 py-2 rounded-lg font-bold text-sm shadow-sm hover:bg-emerald-50">
-                Tailor Resume
-              </button>
-            </div>
-
-            <section>
-              <h4 className="text-xs font-black text-gray-400 uppercase tracking-widest mb-4">
-                Full Context
-              </h4>
-              <div className="p-6 bg-gray-50 rounded-2xl border border-gray-100 text-gray-700 leading-loose italic">
-                "{selectedMatch.content}"
-              </div>
-            </section>
-          </div>
-        ) : (
-          <div className="h-full flex flex-col items-center justify-center text-gray-300">
-            <SearchIcon size={48} strokeWidth={1} className="mb-4 opacity-20" />
-            <p className="italic">
-              Paste a description on the left to analyze match
-            </p>
+      {/* RIGHT COLUMN: DETAIL & ANALYSIS */}
+      <main
+        className={cn(
+          "flex-1 bg-[#fafafa] overflow-y-auto relative transition-all duration-300",
+          // On mobile, if no match is selected, hide the main area or show empty state
+          !selectedMatch ? "hidden lg:flex lg:flex-col" : "flex flex-col",
+        )}
+      >
+        {/* Mobile Back Button (Visible only on small screens when a match is selected) */}
+        {selectedMatch && (
+          <div className="lg:hidden p-4 bg-white border-b border-gray-100 flex items-center">
+            <button
+              onClick={() => setSelectedMatch(null)}
+              className="text-sm font-bold text-blue-600 flex items-center gap-2"
+            >
+              ← Back to results
+            </button>
           </div>
         )}
-      </div>
+
+        <AnimatePresence mode="wait">
+          {selectedMatch ? (
+            <motion.div
+              key={JSON.stringify(selectedMatch.content)}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="p-6 md:p-10 max-w-4xl mx-auto space-y-6 md:space-y-8 w-full"
+            >
+              {/* Call to Action Card - Stack items on mobile */}
+              <div className="bg-emerald-500 text-white p-6 md:p-8 rounded-[2rem] flex flex-col md:flex-row gap-6 justify-between items-start md:items-center shadow-2xl shadow-emerald-500/20">
+                <div className="space-y-1">
+                  <h3 className="font-black text-lg md:text-xl tracking-tight">
+                    Tailor resume for this job
+                  </h3>
+                  <p className="text-emerald-50 opacity-90 text-sm font-medium">
+                    Boost your match rate using this context.
+                  </p>
+                </div>
+                <Button
+                  className="w-full md:w-auto px-6 bg-white text-emerald-700 hover:bg-emerald-50 border-none shadow-lg"
+                  size="compact"
+                >
+                  Tailor Now
+                </Button>
+              </div>
+
+              {/* Analysis Section */}
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="h-1 w-8 bg-blue-500 rounded-full" />
+                  <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em]">
+                    Vector Context Match
+                  </h4>
+                </div>
+
+                <div className="p-6 md:p-8 bg-white rounded-[2rem] border border-gray-100 shadow-sm text-gray-700 leading-relaxed relative">
+                  <span className="hidden md:block absolute top-4 left-4 text-4xl text-blue-100 font-serif">
+                    “
+                  </span>
+                  <p className="relative z-10 text-base md:text-lg font-medium text-gray-600 italic md:px-4">
+                    {selectedMatch.content}
+                  </p>
+                  <span className="hidden md:block absolute bottom-4 right-4 text-4xl text-blue-100 font-serif rotate-180">
+                    “
+                  </span>
+                </div>
+              </section>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="h-full flex flex-col items-center justify-center text-gray-400 p-10 text-center"
+            >
+              <div className="p-6 bg-white rounded-full shadow-xl shadow-gray-200/50 mb-6">
+                <SearchIcon
+                  size={40}
+                  strokeWidth={1.5}
+                  className="text-blue-500 animate-pulse"
+                />
+              </div>
+              <p className="text-sm font-bold uppercase tracking-widest text-gray-300">
+                Ready for Analysis
+              </p>
+              <p className="text-sm text-gray-400 mt-2 max-w-[200px]">
+                Paste a description to find relevant CV matches.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

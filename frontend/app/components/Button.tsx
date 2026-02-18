@@ -68,27 +68,21 @@ export function Button({
     >
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <motion.span
+          <span
             key="loader"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
             className="flex items-center gap-2"
           >
             <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             {loadingText || "Loading..."}
-          </motion.span>
+          </span>
         ) : (
-          <motion.span
+          <span
             key="content"
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
             className="flex items-center gap-2"
           >
             {icon && <span className="text-lg">{icon}</span>}
             {children}
-          </motion.span>
+          </span>
         )}
       </AnimatePresence>
     </motion.button>

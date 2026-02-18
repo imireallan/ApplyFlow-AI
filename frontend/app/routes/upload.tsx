@@ -1,6 +1,7 @@
 import { redirect } from "react-router";
 import type { Route } from "./+types/upload";
 import { UploadForm } from "~/components/UploadForm";
+import { PageWrapper } from "~/components/PageWrapper";
 
 const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/index-cv`;
 
@@ -40,8 +41,10 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function UploadPage({ actionData }: Route.ComponentProps) {
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
-      <UploadForm error={actionData?.error} />
-    </div>
+    <PageWrapper>
+      <div className="h-full flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
+        <UploadForm error={actionData?.error} />
+      </div>
+    </PageWrapper>
   );
 }

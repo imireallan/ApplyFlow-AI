@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router";
+import { NavLink } from "react-router";
 import {
   FileUp,
   Search,
@@ -8,6 +8,7 @@ import {
   Mic2,
   Sparkles,
 } from "lucide-react";
+import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 
 export default function DashboardLayout() {
   return (
@@ -60,7 +61,7 @@ export default function DashboardLayout() {
         </div>
       </aside>
       <main className="flex-1 overflow-hidden">
-        <Outlet />
+        <AnimatedOutlet />
       </main>
     </div>
   );

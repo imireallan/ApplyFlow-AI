@@ -5,13 +5,14 @@ import type { Route } from "./+types/search";
 import type { CVMatch } from "~/types/ai";
 import { Button } from "~/components/Button";
 import { MatchList } from "~/components/MatchList";
-import { cn } from "~/lib/utils";
+import { cn, delay } from "~/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { PageWrapper } from "~/components/PageWrapper";
 
 const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/search-cv`;
 
 export async function loader() {
+  // await delay(5000)
   return { initialMatches: [] as CVMatch[] };
 }
 
@@ -54,7 +55,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
 
   return (
     <PageWrapper>
-      <div className="flex flex-col lg:flex-row h-full bg-white overflow-hidden">
+      <div className="flex flex-col lg:flex-row min-h-screen bg-white overflow-hidden">
         {/* LEFT COLUMN: Fixed width on desktop, full width on mobile */}
         <div
           className={cn(

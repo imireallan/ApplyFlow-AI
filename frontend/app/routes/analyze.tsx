@@ -54,7 +54,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
 
   return (
     <PageWrapper>
-      <div className="flex flex-col lg:flex-row h-screen w-full bg-white overflow-hidden">
+      <div className="flex flex-col lg:flex-row min-h-screen w-full bg-white overflow-hidden">
         {/* LEFT COLUMN: SEARCH & LIST */}
         <div
           className={cn(
@@ -154,8 +154,10 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
         {/* RIGHT COLUMN: DETAIL & ANALYSIS */}
         <main
           className={cn(
-            "flex-1 bg-[#fafafa] overflow-y-auto relative h-full",
-            !selectedMatch ? "hidden lg:flex flex-col" : "flex flex-col",
+            "flex-1 bg-[#fafafa] relative transition-all duration-300 flex flex-col",
+            selectedMatch
+              ? "overflow-y-auto flex"
+              : "overflow-hidden hidden lg:flex",
           )}
         >
           <AnimatePresence mode="wait">
@@ -228,7 +230,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="h-full flex flex-col items-center justify-center text-center p-10"
+                className="flex flex-1 flex-col items-center justify-center text-center p-10"
               >
                 {hasSearched && !isSearching ? (
                   <div className="space-y-6">
@@ -249,13 +251,16 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     </div>
                   </div>
                 ) : (
-                  <div className="space-y-4 opacity-30">
-                    <SearchIcon
-                      size={64}
-                      strokeWidth={1}
-                      className="mx-auto text-gray-400"
-                    />
-                    <p className="text-xs font-black uppercase tracking-[0.3em] text-gray-400">
+                  <div className="space-y-6 group">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-blue-500/5 blur-3xl rounded-full scale-150" />
+                      <SearchIcon
+                        size={80}
+                        strokeWidth={1}
+                        className="relative mx-auto text-gray-300 transition-transform group-hover:scale-110 duration-500"
+                      />
+                    </div>
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em] text-gray-400">
                       Search to analyze
                     </p>
                   </div>

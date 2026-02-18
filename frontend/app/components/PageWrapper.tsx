@@ -15,7 +15,7 @@ export function PageWrapper({ children, ...props }: PageWrapperProps) {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: -50 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="h-full w-full flex flex-col"
+      className="min-h-screen w-full flex flex-col"
       {...props}
     >
       {children}

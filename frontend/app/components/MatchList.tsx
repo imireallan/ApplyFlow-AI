@@ -15,12 +15,17 @@ const container = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { staggerChildren: 0.15, delayChildren: 0.5 },
+    transition: { staggerChildren: 0.15, delayChildren: 0.2 },
   },
 };
 const item = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
+  transition: {
+    type: "spring",
+    stiffness: 260,
+    damping: 20,
+  },
 };
 
 export function MatchList({
@@ -46,9 +51,9 @@ export function MatchList({
           </motion.li>
         ))
       ) : (
-        <div className="text-center py-10 text-gray-400 text-sm italic">
+        <motion.div className="text-center py-10 text-gray-400 text-sm italic">
           No matches found. Try a different description.
-        </div>
+        </motion.div>
       )}
     </motion.ul>
   );

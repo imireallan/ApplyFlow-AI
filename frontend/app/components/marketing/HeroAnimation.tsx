@@ -1,53 +1,69 @@
-import Lottie from "lottie-react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import Lottie from "lottie-react";
 
 import robotAnimation from "~/assets/chatbot.json";
 
+/**
+ * @component HeroAnimation
+ * @description Renders the primary Lottie robot animation with high-performance CSS filters.
+ * * @example
+ * <HeroAnimation />
+ * * @ssr_stability
+ * IMPORTANT: This component utilizes a `isClient` guard (useEffect toggle) to prevent
+ * Server-Side Rendering (SSR) crashes.
+ * * @issue_mitigation
+ * 1. ReferenceError: 'window' is not defined - Resolved by gating the Lottie engine
+ * behind a client-side mount check.
+ * 2. Hydration Mismatch - Resolved by rendering a stable placeholder div on the server
+ * that matches the final client-side dimensions.
+ * 3. AWS CPU Spikes - Prevents infinite container restart loops caused by Node.js
+ * runtime errors during initial page render.
+ * * @dependencies
+ * - lottie-react: For vector animation playback.
+ * - motion/react: For entry transitions and parallax engagement.
+ */
 export function HeroAnimation() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    // This ensures the heavy Lottie engine only loads in the browser
+    setIsClient(true);
+  }, []);
+
   return (
     <div className="relative w-full h-[400px] md:h-[600px] flex items-center justify-center">
-      <div className="absolute w-2/3 h-2/3 bg-blue-500/10 blur-[120px] rounded-full" />
+      <div className="absolute w-2/3 h-2/3 bg-blue-500/10 blur-[120px] rounded-full animate-pulse" />
 
-      <div className="relative z-10 w-full h-full max-w-[500px]">
-        <Lottie
-          animationData={robotAnimation}
-          loop={true}
-          className="w-full h-full"
-          style={{
-            width: "100%",
-            height: "100%",
-            filter: "hue-rotate(433deg) saturate(30)",
-          }}
-        />
+      <div className="relative z-10 w-full h-full max-w-[320px] md:max-w-[500px] aspect-square flex items-center justify-center mt-[-5%] mb-[-10%] md:my-0">
+        {!isClient ? (
+          /* Shimmer Placeholder: Maintains layout height during SSR/Hydration */
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-64 h-64 bg-gray-100/50 rounded-full animate-pulse flex items-center justify-center">
+              <div className="w-32 h-32 bg-gray-200/50 rounded-full animate-ping" />
+            </div>
+          </div>
+        ) : (
+          /* Actual Lottie Animation: Only injected on the client */
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="w-full h-full"
+          >
+            <Lottie
+              animationData={robotAnimation}
+              loop={true}
+              className="w-full h-full"
+              style={{
+                width: "100%",
+                height: "100%",
+                filter: "hue-rotate(433deg) saturate(30)",
+              }}
+            />
+          </motion.div>
+        )}
       </div>
-
-      {/* TODO: Add this section later */}
-
-      {/* <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{
-          opacity: 1,
-          y: [0, -15, 0],
-        }}
-        transition={{
-          y: { repeat: Infinity, duration: 4, ease: "easeInOut" },
-        }}
-        className="absolute top-[30%] right-4 md:right-10 z-20 flex items-center gap-3 bg-white/80 backdrop-blur-xl border border-white/40 p-3 pr-5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.1)]"
-      >
-        <div className="bg-blue-600 rounded-full p-2 text-white shadow-lg shadow-blue-500/40">
-          <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[11px] font-black text-slate-800 uppercase tracking-tight">
-            Try Interactive Demo
-          </span>
-          <span className="text-[10px] text-slate-400 font-bold">
-            2:33 / 5:00
-          </span>
-        </div>
-      </motion.div> */}
     </div>
   );
 }

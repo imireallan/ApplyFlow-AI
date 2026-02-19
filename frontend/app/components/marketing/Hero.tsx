@@ -3,8 +3,8 @@ import { Button } from "~/components/Button";
 import { HeroAnimation } from "./HeroAnimation";
 import { useNavigate } from "react-router";
 import { useMousePosition } from "~/hooks/useMousePosition";
-import { ScanningLine } from "./ScanningLine";
-import { MagneticWrapper } from "../MagneticWrapper";
+import { ScanningLine } from "~/components/ScanningLine";
+import { MagneticWrapper } from "~/components/MagneticWrapper";
 
 const container = {
   hidden: { opacity: 0 },

@@ -5,7 +5,7 @@ import type { Route } from "./+types/search";
 import type { CVMatch } from "~/types/ai";
 import { Button } from "~/components/Button";
 import { MatchList } from "~/components/MatchList";
-import { cn, delay } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 import { AnimatePresence, motion } from "motion/react";
 import { PageWrapper } from "~/components/PageWrapper";
 

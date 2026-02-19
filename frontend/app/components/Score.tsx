@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 
 export function Score({ score }: { score: number }) {
   const percentage = Math.round(score * 100);

@@ -26,11 +26,13 @@ export async function action({ request }: Route.ActionArgs) {
       body: apiData,
     });
 
+    const data = await response.json()
+
     if (response.ok) {
       // After successful indexing, redirect to the search page
       return redirect("/app/search");
     }
-    return { error: "Failed to index CV. Check backend logs." };
+    return { error: data.detail };
   } catch (err) {
     return { error: "Network error connecting to AI Engine." };
   }

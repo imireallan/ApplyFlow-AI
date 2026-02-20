@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import Lottie from "lottie-react";
 
-import robotAnimation from "~/assets/chatbot.json";
+import paperAnimation from "~/assets/aiPaperGenerator.json";
 
 /**
  * @component HeroAnimation
@@ -52,14 +52,14 @@ export function HeroAnimation() {
             className="w-full h-full"
           >
             <Lottie
-              animationData={robotAnimation}
+              animationData={paperAnimation}
               loop={true}
               className="w-full h-full"
-              style={{
-                width: "100%",
-                height: "100%",
-                filter: "hue-rotate(433deg) saturate(30)",
-              }}
+              // style={{
+              //   width: "100%",
+              //   height: "100%",
+              //   // filter: "hue-rotate(433deg) saturate(30)",
+              // }}
             />
           </motion.div>
         )}

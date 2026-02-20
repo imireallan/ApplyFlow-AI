@@ -5,19 +5,31 @@ import { useNavigate } from "react-router";
 import { useMousePosition } from "~/hooks/useMousePosition";
 import { ScanningLine } from "~/components/ScanningLine";
 import { MagneticWrapper } from "~/components/MagneticWrapper";
+import { Typewriter } from "../TypeWriter";
+
+const phrases = [
+  "CV Analysis.",
+  "Strategy Coach.",
+  "LinkedIn Nudges.",
+  "Match Rating.",
+];
 
 const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: { staggerChildren: 0.15 },
+    transition: { staggerChildren: 0.1, delayChildren: 0.3 },
   },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
+  hidden: { y: 20, opacity: 0 },
+  show: {
+    y: 0,
+    opacity: 1,
+    transition: { type: "spring", stiffness: 300, damping: 24 },
+  },
+} as const
 
 export function Hero() {
   const navigate = useNavigate();
@@ -42,7 +54,7 @@ export function Hero() {
   const dustY = useTransform(smoothY, [-1, 1], [-60, 60]);
 
   return (
-    <section className="relative min-h-[90vh] flex flex-col lg:flex-row items-center justify-center px-6 py-12 lg:py-0 overflow-hidden bg-white">
+    <section className="relative min-h-[90vh] flex flex-col lg:flex-row items-center justify-center px-6 py-10 lg:py-0 overflow-hidden bg-white">
       {/* 1. Content Block: Priority on Mobile */}
       <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left z-20 space-y-6">
         <motion.div
@@ -54,19 +66,23 @@ export function Hero() {
             Powered by Llama 3.3
           </span>
         </motion.div>
-        <motion.h1
-          className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] text-gray-900"
-          variants={container}
-          initial="hidden"
-          animate="show"
-        >
-          <motion.span variants={item}>Precision</motion.span>{" "}
-          <motion.span variants={item}>AI</motion.span>
-          <br />
-          <motion.span className="text-blue-600" variants={item}>
-            CV Analysis.
-          </motion.span>
-        </motion.h1>
+        <section className="py-10">
+          <motion.h1
+            className="text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[0.9] text-gray-900"
+            variants={container}
+            initial="hidden"
+            animate="show"
+          >
+            <motion.span variants={item} className="inline-block">
+              Precision
+            </motion.span>{" "}
+            <motion.span variants={item} className="inline-block">
+              AI
+            </motion.span>
+            <br />
+            <Typewriter phrases={phrases} variants={item} />
+          </motion.h1>
+        </section>
 
         <p className="max-w-md text-gray-500 text-lg md:text-xl font-medium leading-relaxed">
           The ultimate RAG-powered engine to tailor your experience for the
@@ -88,7 +104,7 @@ export function Hero() {
         </div>
       </div>
 
-      <div className="w-full lg:w-1/2 relative flex items-center justify-center">
+      <div className="w-full lg:w-1/2 relative flex items-center justify-center mt-6 lg:mt-0">
         {/* Layer 1: Background Glow */}
         <motion.div
           style={{ x: glowX, y: glowY }}
@@ -105,7 +121,7 @@ export function Hero() {
               initial={{ opacity: 0 }}
               animate={{ opacity: [0, 1, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -right-4 top-1/4"
+              className="absolute -right-0.5 top-1/4"
             >
               <div className="flex flex-col gap-1">
                 <div className="h-1 w-4 bg-blue-400/40 rounded-full" />

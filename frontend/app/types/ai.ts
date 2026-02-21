@@ -7,6 +7,9 @@ export interface AINudgeResponse {
 }
 
 export interface CVMatch {
+  id: string;
   content: string;
   score: number;
+  reasoning: string;
+  nudge: string;
 }

@@ -3,10 +3,7 @@ import { Match } from "./Match";
 import { motion } from "motion/react";
 
 interface MatchListProp {
-  results: {
-    content: string;
-    score: number;
-  }[];
+  results: CVMatch[];
   setSelectedMatch: (value: React.SetStateAction<CVMatch | null>) => void;
   selectedMatch: CVMatch | null;
 }
@@ -41,8 +38,8 @@ export function MatchList({
       className="flex-1 overflow-y-auto bg-gray-50/50 p-4 space-y-3"
     >
       {results.length > 0 ? (
-        results.map((match, idx) => (
-          <motion.li variants={item} key={idx}>
+        results.map((match) => (
+          <motion.li variants={item} key={match.id}>
             <Match
               match={match}
               selectedMatch={selectedMatch}

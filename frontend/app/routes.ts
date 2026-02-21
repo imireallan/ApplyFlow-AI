@@ -6,6 +6,6 @@ export default [
     index("./routes/upload.tsx", { id: "dashboard-home" }),
     route("upload", "./routes/upload.tsx"),
     route("search", "./routes/search.tsx"),
-    route("analyze", "./routes/analyze.tsx"),
+    // route("analyze", "./routes/analyze.tsx"),
   ]),
 ] satisfies RouteConfig;

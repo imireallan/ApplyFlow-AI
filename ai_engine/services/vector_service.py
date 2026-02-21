@@ -60,7 +60,8 @@ class VectorService:
             formatted_results.append({
                 "score": round(float(score), 4),
                 "content": doc.page_content,
-                "metadata": doc.metadata
+                "metadata": doc.metadata,
+                "id": doc.id
             })
 
         return formatted_results

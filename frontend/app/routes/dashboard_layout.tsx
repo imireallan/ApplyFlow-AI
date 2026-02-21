@@ -1,26 +1,22 @@
 import { Link, NavLink } from "react-router";
-import {
-  FileUp,
-  Search,
-  BrainCircuit,
-  Target,
-  PenTool,
-  Mic2,
-  Sparkles,
-} from "lucide-react";
+import { FileUp, Search, Target, PenTool, Mic2, Sparkles } from "lucide-react";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
+import { Svg } from "~/components/SvgLogo";
 
 export default function DashboardLayout() {
   return (
     <div className="flex h-full w-full bg-[#fcfcfd]">
       <nav className="w-16 flex flex-col items-center py-6 border-r border-gray-200 bg-white shadow-sm">
-        <Link to="/" className="mb-10 font-black text-blue-600 tracking-tighter text-xl">
-          AF
+        <Link
+          to="/"
+          className="mb-10 font-black text-blue-600 tracking-tighter text-xl"
+        >
+          <Svg />
         </Link>
         <div className="flex flex-col space-y-4">
           <SidebarLink to="/app/upload" icon={<FileUp size={20} />} />
           <SidebarLink to="/app/search" icon={<Search size={20} />} />
-          <SidebarLink to="/app/analyze" icon={<BrainCircuit size={20} />} />
+          {/* <SidebarLink to="/app/analyze" icon={<BrainCircuit size={20} />} /> */}
         </div>
       </nav>
       <aside className="w-64 bg-white border-r border-gray-100 p-6 hidden md:block">

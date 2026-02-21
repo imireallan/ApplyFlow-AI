@@ -29,7 +29,7 @@ const item = {
     opacity: 1,
     transition: { type: "spring", stiffness: 300, damping: 24 },
   },
-} as const
+} as const;
 
 export function Hero() {
   const navigate = useNavigate();
@@ -90,20 +90,18 @@ export function Hero() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
-          <MagneticWrapper>
-            <Button
-              onClick={() => navigate("/app")}
-              stiffness={300}
-              damping={15}
-              className="px-8 shadow-2xl shadow-blue-500/20"
-            >
-              Get Started
-            </Button>
-          </MagneticWrapper>
+          <Button
+            onClick={() => navigate("/app")}
+            stiffness={300}
+            damping={15}
+            className="px-8 shadow-2xl shadow-blue-500/20"
+          >
+            Get Started
+          </Button>
+
           <Button variant="outline">View Demo</Button>
         </div>
       </div>
-
       <div className="w-full lg:w-1/2 relative flex items-center justify-center mt-6 lg:mt-0">
         {/* Layer 1: Background Glow */}
         <motion.div

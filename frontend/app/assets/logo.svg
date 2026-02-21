@@ -1,0 +1,20 @@
+<svg width="420" height="120" viewBox="0 0 420 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Icon -->
+  <rect x="20" y="30" width="60" height="60" rx="16" fill="#155DFC"/>
+
+  <!-- Subtle upward flow mark -->
+  <path d="M40 70C50 55 65 55 75 45" 
+        stroke="white" 
+        stroke-width="4" 
+        stroke-linecap="round"/>
+
+  <!-- Wordmark -->
+  <text x="100" y="72"
+        font-family="Inter, SF Pro Display, system-ui, sans-serif"
+        font-size="42"
+        font-weight="600"
+        fill="#155DFC"
+        letter-spacing="-1">
+    ApplyFlow
+  </text>
+</svg>

@@ -1,4 +1,4 @@
-import { Outlet, NavLink } from "react-router";
+import { Link, NavLink } from "react-router";
 import {
   FileUp,
   Search,
@@ -8,18 +8,19 @@ import {
   Mic2,
   Sparkles,
 } from "lucide-react";
+import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 
 export default function DashboardLayout() {
   return (
     <div className="flex h-full w-full bg-[#fcfcfd]">
       <nav className="w-16 flex flex-col items-center py-6 border-r border-gray-200 bg-white shadow-sm">
-        <div className="mb-10 font-black text-blue-600 tracking-tighter text-xl">
+        <Link to="/" className="mb-10 font-black text-blue-600 tracking-tighter text-xl">
           AF
-        </div>
+        </Link>
         <div className="flex flex-col space-y-4">
-          <SidebarLink to="/upload" icon={<FileUp size={20} />} />
-          <SidebarLink to="/search" icon={<Search size={20} />} />
-          <SidebarLink to="/analyze" icon={<BrainCircuit size={20} />} />
+          <SidebarLink to="/app/upload" icon={<FileUp size={20} />} />
+          <SidebarLink to="/app/search" icon={<Search size={20} />} />
+          <SidebarLink to="/app/analyze" icon={<BrainCircuit size={20} />} />
         </div>
       </nav>
       <aside className="w-64 bg-white border-r border-gray-100 p-6 hidden md:block">
@@ -60,7 +61,7 @@ export default function DashboardLayout() {
         </div>
       </aside>
       <main className="flex-1 overflow-hidden">
-        <Outlet />
+        <AnimatedOutlet />
       </main>
     </div>
   );

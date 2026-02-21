@@ -1,16 +1,14 @@
-import { Form, redirect, useNavigation } from "react-router";
-import { Upload, Loader2, FileCheck } from "lucide-react";
+import { redirect } from "react-router";
 import type { Route } from "./+types/upload";
 import { UploadForm } from "~/components/UploadForm";
+import { PageWrapper } from "~/components/PageWrapper";
 
 const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/index-cv`;
 
-// Even if it just returns null, it satisfies the router
 export async function loader() {
   return null;
 }
 
-// Handles the actual file upload
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const file = formData.get("file");
@@ -19,7 +17,6 @@ export async function action({ request }: Route.ActionArgs) {
     return { error: "Please select a valid PDF file." };
   }
 
-  // Use a new FormData to send to your FastAPI backend
   const apiData = new FormData();
   apiData.append("file", file);
 
@@ -29,11 +26,13 @@ export async function action({ request }: Route.ActionArgs) {
       body: apiData,
     });
 
+    const data = await response.json()
+
     if (response.ok) {
       // After successful indexing, redirect to the search page
-      return redirect("/search");
+      return redirect("/app/search");
     }
-    return { error: "Failed to index CV. Check backend logs." };
+    return { error: data.detail };
   } catch (err) {
     return { error: "Network error connecting to AI Engine." };
   }
@@ -41,8 +40,10 @@ export async function action({ request }: Route.ActionArgs) {
 
 export default function UploadPage({ actionData }: Route.ComponentProps) {
   return (
-    <div className="h-full flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
-      <UploadForm error={actionData?.error} />
-    </div>
+    <PageWrapper>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
+        <UploadForm error={actionData?.error} />
+      </div>
+    </PageWrapper>
   );
 }

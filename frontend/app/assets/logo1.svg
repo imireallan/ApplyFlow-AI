@@ -1,0 +1,27 @@
+<svg width="460" height="140" viewBox="0 0 460 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Neural network icon -->
+  <g transform="translate(20,30)">
+    <!-- Connections -->
+    <path d="M20 50L60 20L100 50L60 80Z"
+          stroke="#155DFC"
+          stroke-width="3"
+          fill="none"/>
+
+    <!-- Nodes -->
+    <circle cx="20" cy="50" r="6" fill="#155DFC"/>
+    <circle cx="60" cy="20" r="6" fill="#155DFC"/>
+    <circle cx="100" cy="50" r="6" fill="#155DFC"/>
+    <circle cx="60" cy="80" r="6" fill="#155DFC"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="160" y="78"
+        font-family="Inter, SF Pro Display, system-ui, sans-serif"
+        font-size="42"
+        font-weight="600"
+        fill="#155DFC"
+        letter-spacing="-1">
+    ApplyFlow
+  </text>
+</svg>

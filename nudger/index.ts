@@ -4,44 +4,49 @@ const client = new Client({
   connectionString: process.env.DATABASE_URL,
 });
 
-let hasLoggedHeartbeat = false;
-let loopCount = 0;
+// Turnn on for prod
+// const client = new Client({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl: {
+//     rejectUnauthorized: false,
+//   },
+// });
+
+// async function connectWithRetry(retries = 5, delay = 5000) {
+//   for (let i = 0; i < retries; i++) {
+//     try {
+//       await client.connect();
+//       return;
+//     } catch (err) {
+//       console.log(`Connection attempt ${i + 1} failed. Retrying in ${delay/1000}s...`);
+//       await new Promise(res => setTimeout(res, delay));
+//     }
+//   }
+//   process.exit(1); // Only crash after 5 failed attempts
+// }
 
 async function testConnection(): Promise<void> {
   try {
+    // Log the attempt (useful for debugging network lag)
+    console.log(`Nudger: Connecting to RDS at ${client.host}...`);
+
     await client.connect();
-    console.log("Nudger Service: Successfully connected to PostgreSQL");
+    console.log("Nudger Service: Successfully connected to PostgreSQL via SSL");
 
-    // Heartbeat logic
-    setInterval(() => {
-      loopCount++;
-      const now = new Date().toISOString();
+    // ... your heartbeat logic ...
+  } catch (err: any) {
+    if (err.message.includes("no pg_hba.conf entry")) {
+      console.error(
+        "CRITICAL: RDS is rejecting non-encrypted connection. Ensure SSL is enabled in the client config.",
+      );
+    }
 
-      // 1. Log ONLY the very first heartbeat to confirm startup
-      if (!hasLoggedHeartbeat) {
-        console.log(
-          `[${now}] Nudger heartbeat initialized. Monitoring application targets...`,
-        );
-        hasLoggedHeartbeat = true;
-      }
+    console.error("Nudger Service: Connection failed", {
+      code: err.code,
+      message: err.message,
+      host: client.host,
+    });
 
-      // 2. Log an "All Clear" every 100 cycles (approx. every 16 minutes)
-      // This prevents log pollution while proving the service hasn't hung.
-      if (loopCount % 100 === 0) {
-        console.log(
-          `[${now}] Nudger Status: Service active. Cycles completed: ${loopCount}`,
-        );
-      }
-
-      // TODO: Add Logic
-    }, 10000);
-  } catch (err) {
-    // If the core DB connection fails, the service should crash
-    // so that Docker/Kubernetes can attempt a restart.
-    console.error(
-      "Nudger Service: Database connection error",
-      err instanceof Error ? err.message : err,
-    );
     process.exit(1);
   }
 }

@@ -1,119 +1,165 @@
-import { Form, useNavigation } from "react-router";
-import { Upload, Loader2, AlertCircle, CheckCircle2, FileText, X } from "lucide-react";
-import { useState, useRef } from "react";
+import { Loader2, Upload, CheckCircle2, X, AlertCircle } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState, useCallback } from "react";
+import { useDropzone } from "react-dropzone";
+import { useSubmit, useNavigation, Form } from "react-router";
+import { Button } from "./Button";
+import { ScanningLine } from "./ScanningLine";
 
 export function UploadForm({ error }: { error?: string }) {
+  const submit = useSubmit();
   const navigation = useNavigation();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const isUploading =
-    navigation.state === "submitting" &&
+  // The scanner only runs when the specific "upload-cv" intent is active
+  const isProcessing =
+    navigation.state !== "idle" &&
     navigation.formData?.get("intent") === "upload-cv";
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setSelectedFile(acceptedFiles[0]);
     }
-  };
+  }, []);
 
-  const clearFile = (e: React.MouseEvent) => {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: { "application/pdf": [".pdf"] },
+    multiple: false,
+    disabled: isProcessing,
+  });
+
+  const handleManualSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (!selectedFile) return;
+
+    const formData = new FormData(e.currentTarget);
+    formData.append("file", selectedFile);
+    formData.append("intent", "upload-cv");
+
+    submit(formData, { method: "post", encType: "multipart/form-data" });
   };
 
   return (
-    <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 animate-in fade-in zoom-in duration-300">
+    <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden">
+      {/* 1. Processing Overlay: Triggered by useNavigation */}
+      <AnimatePresence>
+        {isProcessing && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-50 bg-white/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center"
+          >
+            <ScanningLine />
+            <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
+            <h3 className="text-xl font-black text-gray-900 tracking-tight italic">
+              Vectorizing...
+            </h3>
+            <p className="text-xs text-gray-500 mt-2 px-8">
+              Llama 3.3 is mapping your experience into the RAG engine.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="text-center mb-8">
-        <div className="inline-flex p-3 bg-blue-50 rounded-2xl text-blue-600 mb-4">
-          <FileText size={24} />
-        </div>
         <h2 className="text-2xl font-black text-blue-600 tracking-tight italic">
           Initialize Profile
         </h2>
-        <p className="text-sm text-gray-500 mt-2">
-          Upload your CV to start the AI analysis.
-        </p>
       </div>
 
-      <Form method="post" encType="multipart/form-data" className="space-y-6">
-        <input type="hidden" name="intent" value="upload-cv" />
-
+      <Form method="post" onSubmit={handleManualSubmit} className="space-y-6">
         <div
-          className={`group relative border-2 border-dashed rounded-[2rem] p-10 transition-all flex flex-col items-center justify-center min-h-[200px] ${
-            selectedFile
-              ? "border-emerald-200 bg-emerald-50/30"
-              : "border-gray-200 hover:border-blue-500 hover:bg-blue-50/30"
-          }`}
+          {...getRootProps()}
+          className={`relative border-2 border-dashed rounded-[2rem] p-10 transition-all cursor-pointer flex flex-col items-center justify-center min-h-[200px]
+            ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-400"}
+            ${error ? "border-red-200 bg-red-50/30" : ""}`}
         >
-          {!selectedFile ? (
-            <>
-              <Upload
-                className="text-gray-300 group-hover:text-blue-500 mb-4 transition-colors group-hover:scale-110 duration-300"
-                size={42}
-              />
-              <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] text-center group-hover:text-blue-600">
-                Drop PDF here or click to browse
-              </p>
-            </>
-          ) : (
-            <div className="flex flex-col items-center animate-in zoom-in duration-200">
-              <div className="relative">
-                <CheckCircle2 className="text-emerald-500 mb-4" size={48} />
-                <button
-                  onClick={clearFile}
-                  className="absolute -top-2 -right-2 p-1 bg-white border border-gray-100 rounded-full text-gray-400 hover:text-red-500 shadow-sm"
-                >
-                  <X size={14} />
-                </button>
-              </div>
-              <p className="text-sm font-bold text-gray-900 text-center break-all px-4">
-                {selectedFile.name}
-              </p>
-              <p className="text-[10px] text-emerald-600 font-bold uppercase mt-2">
-                Ready to Index
-              </p>
-            </div>
-          )}
+          <input {...getInputProps()} />
 
-          <input
-            ref={fileInputRef}
-            name="file"
-            type="file"
-            accept=".pdf"
-            required
-            onChange={handleFileChange}
-            className="absolute inset-0 opacity-0 cursor-pointer"
-            disabled={isUploading}
-          />
+          <AnimatePresence mode="wait">
+            {!selectedFile ? (
+              <motion.div
+                key="empty"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="flex flex-col items-center"
+              >
+                <Upload
+                  className={`mb-4 ${error ? "text-red-300" : "text-gray-300"}`}
+                  size={48}
+                />
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
+                  Drop CV to begin
+                </p>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="selected"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="flex flex-col items-center text-center"
+              >
+                <div className="relative mb-2">
+                  <div
+                    className={`p-4 rounded-2xl ${error ? "bg-red-50" : "bg-emerald-50"}`}
+                  >
+                    {error ? (
+                      <AlertCircle className="text-red-500" size={32} />
+                    ) : (
+                      <CheckCircle2 className="text-emerald-500" size={32} />
+                    )}
+                  </div>
+                  {!isProcessing && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFile(null);
+                      }}
+                      className="absolute -top-2 -right-2 p-1 bg-white border border-gray-100 rounded-full text-gray-400 hover:text-red-500 shadow-sm"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <p className="text-sm font-bold text-gray-900 max-w-[200px] truncate">
+                  {selectedFile.name}
+                </p>
+                <p
+                  className={`text-[10px] font-bold uppercase mt-1 ${error ? "text-red-600" : "text-emerald-600"}`}
+                >
+                  {error ? "Analysis Failed" : "Ready for scanning"}
+                </p>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
-        {error && (
-          <div className="flex items-center gap-2 justify-center p-3 bg-red-50 text-red-600 rounded-xl border border-red-100">
-            <AlertCircle size={14} />
-            <p className="text-xs font-bold">{error}</p>
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={isUploading || !selectedFile}
-          className={`w-full py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-xl active:scale-[0.98] ${
-            isUploading
-              ? "bg-blue-600 text-white"
-              : "bg-[#1a1d23] text-white hover:bg-black disabled:bg-gray-100 disabled:text-gray-400 disabled:shadow-none"
-          }`}
-        >
-          {isUploading ? (
-            <>
-              <Loader2 className="animate-spin" size={18} />
-              Vectorizing Knowledge...
-            </>
-          ) : (
-            "Index CV"
+        {/* Dynamic Error Feedback from ActionData */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100"
+            >
+              <AlertCircle size={16} className="shrink-0 mt-0.5" />
+              <p className="text-xs font-bold leading-tight">{error}</p>
+            </motion.div>
           )}
-        </button>
+        </AnimatePresence>
+
+        <Button
+          type="submit"
+          disabled={isProcessing || !selectedFile}
+          variant={error ? "outline" : "primary"}
+          className="w-full uppercase h-14"
+        >
+          {isProcessing ? "Analyzing..." : error ? "Try Again" : "Index CV"}
+        </Button>
       </Form>
     </div>
   );

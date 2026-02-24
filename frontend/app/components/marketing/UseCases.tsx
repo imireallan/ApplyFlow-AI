@@ -62,7 +62,7 @@ const capabilities = [
 
 export function UseCases() {
   return (
-    <section className="py-20 sm:py-24 bg-white">
+    <section id="features" className="py-20 sm:py-24 bg-white">
       <motion.div
         variants={containerVariants}
         initial="hidden"

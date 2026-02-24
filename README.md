@@ -55,6 +55,14 @@ The frontend reads:
   - The UI appends paths like `/cv/index-cv` and `/agent/process`.
   - The FastAPI app is configured with `root_path="/api"` for proxy deployments; using a base like `http://localhost:8000/api` also works.
 
+## Tech Stack
+- **Frontend**: `React Router v7`, `Vite`, `Tailwind CSS`, `TypeScript`
+- **Backend**: `FastAPI`, `LangChain`, `LangChain-Community`
+- **Vector DB**: `Pinecone`
+- **LLM**: `Groq (Llama 3.3-70b)` or `OpenAI (GPT-4o-mini)`
+- **Embeddings**: `HuggingFace (all-MiniLM-L6-v2)`
+- **Database**: `PostgreSQL` (for nudger)
+
 ## Documentation
 
 - **API reference**: `docs/API.md`

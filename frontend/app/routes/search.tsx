@@ -88,8 +88,6 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
   const [copied, setCopied] = useState(false);
 
-  console.log(error);
-
   // Auto-select first match on new results
   useEffect(() => {
     if (results.length > 0) {

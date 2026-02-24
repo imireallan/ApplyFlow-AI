@@ -9,14 +9,14 @@ export function Score({ score }: { score: number }) {
   // Offset logic now uses the percentage correctly (0.0 to 1.0)
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  const getColor = (s: number) => {
-    // Adjusted thresholds for 1-10 scale
-    if (s >= 8 || s >= 0.8) return "text-emerald-500";
-    if (s >= 5 || s >= 0.5) return "text-blue-500";
+  const getColor = (normalizedScore: number) => {
+    // Normalize so we always compare 0.0–1.0 regardless of 1–10 or 0–1 input
+    if (normalizedScore >= 0.8) return "text-emerald-500";
+    if (normalizedScore >= 0.5) return "text-blue-500";
     return "text-amber-500";
   };
 
-  const colorClass = getColor(score);
+  const colorClass = getColor(normalizedScore);
 
   return (
     <div className="absolute top-3 right-3 flex items-center justify-center w-14 h-14">

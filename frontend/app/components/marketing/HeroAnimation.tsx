@@ -26,40 +26,25 @@ import paperAnimation from "~/assets/aiPaperGenerator.json";
 export function HeroAnimation() {
   const [isClient, setIsClient] = useState(false);
 
-  useEffect(() => {
-    // This ensures the heavy Lottie engine only loads in the browser
-    setIsClient(true);
-  }, []);
+  useEffect(() => setIsClient(true), []);
 
   return (
-    <div className="relative w-full h-[400px] md:h-[600px] flex items-center justify-center">
-      <div className="absolute w-2/3 h-2/3 bg-blue-500/10 blur-[120px] rounded-full animate-pulse" />
+    <div className="relative w-full h-[300px] sm:h-[400px] md:h-[500px] flex items-center justify-center">
+      <div className="absolute w-2/3 h-2/3 bg-blue-500/10 blur-[100px] rounded-full animate-pulse" />
 
-      <div className="relative z-10 w-full h-full max-w-[320px] md:max-w-[500px] aspect-square flex items-center justify-center mt-[-5%] mb-[-10%] md:my-0">
+      <div className="relative z-10 w-full max-w-[260px] sm:max-w-[320px] md:max-w-[450px] aspect-square flex items-center justify-center">
         {!isClient ? (
-          /* Shimmer Placeholder: Maintains layout height during SSR/Hydration */
-          <div className="w-full h-full flex items-center justify-center">
-            <div className="w-64 h-64 bg-gray-100/50 rounded-full animate-pulse flex items-center justify-center">
-              <div className="w-32 h-32 bg-gray-200/50 rounded-full animate-ping" />
-            </div>
-          </div>
+          <div className="w-40 h-40 bg-gray-100 rounded-full animate-pulse" />
         ) : (
-          /* Actual Lottie Animation: Only injected on the client */
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             className="w-full h-full"
           >
             <Lottie
               animationData={paperAnimation}
-              loop={true}
+              loop
               className="w-full h-full"
-              // style={{
-              //   width: "100%",
-              //   height: "100%",
-              //   // filter: "hue-rotate(433deg) saturate(30)",
-              // }}
             />
           </motion.div>
         )}

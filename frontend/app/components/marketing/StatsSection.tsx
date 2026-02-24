@@ -4,25 +4,25 @@ import { containerVariants, itemVariants } from "~/lib/variants";
 
 const stats = [
   {
-    label: "Match Accuracy",
+    label: "Match Rate",
     value: "98%",
     icon: <Target className="w-5 h-5 text-white" />,
     color: "bg-blue-600", // Trust & Accuracy
   },
   {
-    label: "Search Speed",
+    label: "Analysis Time",
     value: "< 2s",
     icon: <Zap className="w-5 h-5 text-white" />,
     color: "bg-amber-500", // Fast/High energy
   },
   {
-    label: "CVs Analyzed",
+    label: "Resumes Processed",
     value: "10k+",
     icon: <Users className="w-5 h-5 text-white" />,
     color: "bg-indigo-600", // Community/Volume
   },
   {
-    label: "Strategic Insights",
+    label: "Job Insights",
     value: "Instant",
     icon: <BrainCircuit className="w-5 h-5 text-white" />,
     color: "bg-emerald-500", // Intelligence/Growth

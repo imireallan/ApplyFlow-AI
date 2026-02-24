@@ -180,13 +180,13 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
         >
           <div className="p-6 border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6">
-              Search Experience
+              Find Your Best Fit
             </h2>
             <Form method="post" className="space-y-4">
               <textarea
                 name="job_description"
                 rows={4}
-                placeholder="Paste the Job Description..."
+                placeholder="Paste the job you're applying for..."
                 className="w-full text-gray-700 bg-gray-50 border border-gray-100 rounded-3xl py-4 px-6 text-sm outline-none focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 transition-all resize-none shadow-inner"
                 required
               />
@@ -196,7 +196,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                 icon={<Sparkles size={16} />}
                 className="w-full shadow-xl shadow-blue-500/20"
               >
-                Find Best Match
+                Analyze My Fit
               </Button>
             </Form>
             <AnimatePresence>
@@ -244,7 +244,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     <SearchIcon className="text-blue-200" size={24} />
                   </div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">
-                    Awaiting Input
+                    Ready to Help
                   </p>
                 </div>
               )}
@@ -287,7 +287,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                   {/* Match Rating - Fixed width column for Score component consistency */}
                   <div className="xl:col-span-4 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-center relative min-h-[160px]">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
-                      Match Rating
+                      Fit Score
                     </h3>
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl font-black text-blue-600 leading-none">
@@ -303,7 +303,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                   {/* Strategic Reasoning - Responsive column spanning 8 units */}
                   <div className="xl:col-span-8 bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm flex flex-col justify-center min-w-0">
                     <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
-                      Strategic Reasoning
+                      Why This Fits You
                     </h3>
                     {/* break-words and min-w-0 prevent text from pushing the container width */}
                     <p className="text-lg md:text-xl text-gray-700 font-medium italic leading-relaxed border-l-4 border-blue-100 pl-6 break-words">
@@ -320,7 +320,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                         <MessageSquare size={20} />
                       </div>
                       <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
-                        LinkedIn Outreach
+                        Message to Recruiter
                       </h3>
                     </div>
                   </div>
@@ -341,7 +341,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     ) : (
                       <ClipboardIcon size={14} />
                     )}
-                    {copied ? "Copied!" : "Copy Nudge"}
+                    {copied ? "Copied!" : "Copy Ready Message"}
                   </button>
                   <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
                 </section>
@@ -349,7 +349,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                 {/* 3. CV Context Block */}
                 <section className="space-y-4">
                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
-                    Source Context
+                    Resume Section Used
                   </h4>
                   <div className="p-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm text-gray-600 leading-relaxed font-medium overflow-y-auto">
                     <p className="text-base leading-loose italic wrap-break-word">
@@ -368,11 +368,10 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                   <Sparkles size={40} className="text-blue-500 animate-pulse" />
                 </div>
                 <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">
-                  Select a Match
+                  Choose a Result
                 </h3>
                 <p className="text-gray-400 text-sm mt-2 max-w-xs mx-auto">
-                  Click on an experience block on the left to see the AI
-                  strategy.
+                  Click on a match on the left to see how it fits the job.
                 </p>
               </motion.div>
             )}

@@ -27,12 +27,12 @@ export default function DashboardLayout() {
         <nav className="space-y-2">
           <FeatureNavItem
             icon={<Target size={18} />}
-            label="Skills Gap"
+            label="Find Best Matches"
             active
           />
           <FeatureNavItem
             icon={<PenTool size={18} />}
-            label="Bullet Tailoring"
+            label="Improve Your Resume"
             isComingSoon
           />
           <FeatureNavItem
@@ -42,14 +42,14 @@ export default function DashboardLayout() {
           />
           <FeatureNavItem
             icon={<Sparkles size={18} />}
-            label="Salary Match"
+            label="Salary Insights"
             isComingSoon
           />
         </nav>
 
         <div className="mt-10 p-4 bg-blue-50 rounded-2xl border border-blue-100">
           <p className="text-[11px] font-bold text-blue-600 uppercase mb-1">
-            Current Profile
+            Your Resume
           </p>
           <p className="text-xs text-blue-900 font-medium truncate">
             Standard_Resume_2026.pdf

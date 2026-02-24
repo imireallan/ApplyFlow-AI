@@ -54,10 +54,10 @@ export function UploadForm({ error }: { error?: string }) {
             <ScanningLine />
             <Loader2 className="animate-spin text-blue-600 mb-4" size={40} />
             <h3 className="text-xl font-black text-gray-900 tracking-tight italic">
-              Vectorizing...
+              Processing your resume...
             </h3>
             <p className="text-xs text-gray-500 mt-2 px-8">
-              Llama 3.3 is mapping your experience into the RAG engine.
+              I'm analyzing your experience to find your best job matches.
             </p>
           </motion.div>
         )}
@@ -65,7 +65,7 @@ export function UploadForm({ error }: { error?: string }) {
 
       <div className="text-center mb-8">
         <h2 className="text-2xl font-black text-blue-600 tracking-tight italic">
-          Initialize Profile
+          Upload Your Resume
         </h2>
       </div>
 
@@ -92,7 +92,7 @@ export function UploadForm({ error }: { error?: string }) {
                   size={48}
                 />
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest text-center">
-                  Drop CV to begin
+                  Drop your resume here
                 </p>
               </motion.div>
             ) : (
@@ -158,7 +158,11 @@ export function UploadForm({ error }: { error?: string }) {
           variant={error ? "outline" : "primary"}
           className="w-full uppercase h-14"
         >
-          {isProcessing ? "Analyzing..." : error ? "Try Again" : "Index CV"}
+          {isProcessing
+            ? "Analyzing..."
+            : error
+              ? "Try Again"
+              : "Upload Resume"}
         </Button>
       </Form>
     </div>

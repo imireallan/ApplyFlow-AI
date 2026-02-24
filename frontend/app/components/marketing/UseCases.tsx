@@ -35,22 +35,22 @@ const itemVariants: Variants = {
 const capabilities = [
   {
     icon: Search,
-    title: "Semantic Discovery",
-    desc: "Move beyond keywords. Find the perfect CV experience blocks.",
+    title: "Find the Perfect Match",
+    desc: "See which parts of your resume match the job - beyond just keywords.",
     color: "text-blue-600",
     glow: "bg-blue-600/10",
   },
   {
     icon: BrainCircuit,
-    title: "Strategic Analysis",
-    desc: "Get instant match ratings and AI-driven reasoning.",
+    title: "Get AI Insights",
+    desc: "Know exactly how well you fit the role with an instant score and reasons why.",
     color: "text-indigo-600",
     glow: "bg-indigo-600/10",
   },
   {
     icon: Zap,
-    title: "Automated Outreach",
-    desc: "Generate high-conversion LinkedIn nudges tailored specifically.",
+    title: "Ready-to-Send Messages",
+    desc: "Get personalized messages you can send directly to recruiters.",
     color: "text-emerald-600",
     glow: "bg-emerald-600/10",
   },

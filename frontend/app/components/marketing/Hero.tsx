@@ -8,10 +8,10 @@ import { MagneticWrapper } from "~/components/MagneticWrapper";
 import { Typewriter } from "../TypeWriter";
 
 const phrases = [
-  "CV Analysis.",
-  "Strategy Coach.",
-  "LinkedIn Nudges.",
-  "Match Rating.",
+  "Resume Analysis.",
+  "Job Matching.",
+  "Recruiter Messages.",
+  "Fit Score.",
 ];
 
 const container = {
@@ -53,7 +53,7 @@ export function Hero() {
       {/* Content */}
       <div className="w-full lg:w-1/2 flex flex-col items-center lg:items-start text-center lg:text-left z-20 space-y-5">
         <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-600 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
-          Powered by Llama 3.3
+          AI-Powered Career Assistant
         </span>
 
         <motion.h1
@@ -62,15 +62,16 @@ export function Hero() {
           initial="hidden"
           animate="show"
         >
-          <motion.span variants={item}>Precision</motion.span>{" "}
+          <motion.span variants={item}>ApplyFlow</motion.span>{" "}
           <motion.span variants={item}>AI</motion.span>
           <br />
           <Typewriter phrases={phrases} variants={item} />
         </motion.h1>
 
         <p className="max-w-sm sm:max-w-md text-gray-500 text-base sm:text-lg font-medium leading-relaxed px-2 sm:px-0">
-          The ultimate RAG-powered engine to tailor your experience for the
-          world's most competitive roles.
+          Upload your resume, paste a job description, and get instant insights
+          on how well you fit the role - plus a ready-to-send message for the
+          recruiter.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -78,11 +79,11 @@ export function Hero() {
             onClick={() => navigate("/app")}
             className="w-full sm:w-auto px-6 shadow-xl shadow-blue-500/20"
           >
-            Get Started
+            Start Now - It's Free
           </Button>
 
           <Button variant="outline" className="w-full sm:w-auto">
-            View Demo
+            See How It Works
           </Button>
         </div>
       </div>

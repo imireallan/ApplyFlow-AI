@@ -17,9 +17,8 @@ class AgentService:
             # Llama 3 on Groq for testing
             self.llm = ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
 
-    def process_job_application(self, job_description: str):
-        matches = self.vector_service.query_cv(job_description, k=3)
-        context_text = "\n---\n".join([m["content"] for m in matches])
+    def process_job_application(self, job_description: str, top_k:  int):
+        matches = self.vector_service.query_cv(job_description, k=top_k)
 
         prompt = ChatPromptTemplate.from_messages([
             ("system", NUDGE_SYSTEM_PROMPT),
@@ -28,7 +27,19 @@ class AgentService:
 
         chain = prompt | self.llm | JsonOutputParser()
         
-        return chain.invoke({
-            "context": context_text, 
-            "job_desc": job_description
-        })
+        enriched_results = []
+        for match in matches:
+            ai_analysis = chain.invoke({
+                "context": match["content"], 
+                "job_desc": job_description
+            })
+            
+            enriched_results.append({
+                "id": match.get("id"),
+                "content": match["content"],
+                "score": ai_analysis.get("match_score"),
+                "reasoning": ai_analysis.get("reasoning"),
+                "nudge": ai_analysis.get("nudge")
+            })
+                    
+        return enriched_results

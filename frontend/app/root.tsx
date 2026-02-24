@@ -11,6 +11,15 @@ import type { Route } from "./+types/root";
 import "./app.css";
 import { GlobalSpinner } from "./components/GlobalSpinner";
 
+export const meta: Route.MetaFunction = () => [
+  { title: "ApplyFlow" },
+  {
+    name: "description",
+    content:
+      "ApplyFlow is a platform that helps you find the best fit for your job.",
+  },
+];
+
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {

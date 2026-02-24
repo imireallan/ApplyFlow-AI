@@ -1,18 +1,22 @@
 import { motion } from "motion/react";
 
 export function Score({ score }: { score: number }) {
-  const percentage = Math.round(score * 100);
+  const normalizedScore = score > 1 ? score / 10 : score;
+  const percentage = Math.round(normalizedScore * 100);
+
   const radius = 18;
   const circumference = 2 * Math.PI * radius;
+  // Offset logic now uses the percentage correctly (0.0 to 1.0)
   const strokeDashoffset = circumference - (percentage / 100) * circumference;
 
-  const getColor = (s: number) => {
-    if (s >= 0.8) return "text-emerald-500";
-    if (s >= 0.5) return "text-blue-500";
+  const getColor = (normalizedScore: number) => {
+    // Normalize so we always compare 0.0–1.0 regardless of 1–10 or 0–1 input
+    if (normalizedScore >= 0.8) return "text-emerald-500";
+    if (normalizedScore >= 0.5) return "text-blue-500";
     return "text-amber-500";
   };
 
-  const colorClass = getColor(score);
+  const colorClass = getColor(normalizedScore);
 
   return (
     <div className="absolute top-3 right-3 flex items-center justify-center w-14 h-14">

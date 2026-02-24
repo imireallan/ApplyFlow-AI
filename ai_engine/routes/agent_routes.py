@@ -9,7 +9,7 @@ agent_service = AgentService()
 async def process_job(request: QueryRequest):
     try:
         # Returns a dict with score, reasoning, and nudge
-        result = agent_service.process_job_application(request.job_description)
+        result = agent_service.process_job_application(request.job_description, request.top_k)
         return {
             "status": "success",
             "data": result

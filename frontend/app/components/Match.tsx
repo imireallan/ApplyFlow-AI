@@ -18,7 +18,7 @@ export function Match({ match, selectedMatch, setSelectedMatch }: MatchProps) {
       whileTap={{ scale: 0.98 }}
       onClick={() => setSelectedMatch(match)}
       className={cn(
-        "relative cursor-pointer p-6 rounded-[2rem] border transition-all duration-300",
+        "relative cursor-pointer p-6 rounded-4xl border transition-all duration-300",
         isSelected
           ? "bg-white border-blue-500 shadow-2xl shadow-blue-500/10 ring-1 ring-blue-500/20"
           : "bg-white border-gray-100 hover:border-blue-200 shadow-sm",

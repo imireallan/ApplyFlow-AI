@@ -35,7 +35,7 @@ export function MatchList({
       initial="hidden"
       animate="visible"
       variants={container}
-      className="flex-1 overflow-y-auto bg-gray-50/50 p-4 space-y-3"
+      className="max-h-full overflow-y-auto bg-gray-50/50 p-4 space-y-3 rounded-4xl pb-12"
     >
       {results.length > 0 ? (
         results.map((match) => (

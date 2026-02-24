@@ -21,6 +21,71 @@ const API_URL = `${import.meta.env.VITE_AI_API_URL}/agent/process`;
 
 export async function loader() {
   // await delay(5000)
+  // const response = {
+  //   status: "success",
+  //   data: [
+  //     {
+  //       id: "921ffbce-ab94-4997-8bc6-03d40cd91eec",
+  //       content:
+  //         "Allan Imire\nSoftware Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, NextJS, React, Javascript, Typescript, TailwindCSS, HTML5, Python, Django, GraphQL, Git, MySQL,\nPostgreSQL, NoSQL, MongoDB, Redis, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nFrontend Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 6,
+  //       reasoning:
+  //         "The candidate has experience with AWS, but the job description specifically requires AWS EKS, and although the candidate has experience with Docker and CI/CD, the primary focus of the job is on Python, which is not the candidate's primary tech stack.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was impressed by the opportunity to work with Python, Docker, and AWS EKS. With my experience in Docker, AWS, and CI/CD pipelines, I believe I can bring significant value to your team, and I'd love to discuss how my skills can be adapted to fit the requirements of the position.",
+  //     },
+  //     {
+  //       id: "e5d24326-4733-4581-88fe-64b2bbda93cc",
+  //       content:
+  //         "Allan Imire\nSoftware Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, NextJS, React, Javascript, Typescript, TailwindCSS, HTML5, Python, Django, GraphQL, Git, MySQL,\nPostgreSQL, NoSQL, MongoDB, Redis, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nFrontend Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 6,
+  //       reasoning:
+  //         "The candidate's experience with AWS and Docker is a good match, but the job description prioritizes Python, Kubernetes, and AWS EKS, which are not the candidate's primary strengths.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was impressed by the opportunity to work with AWS and Docker, technologies I've utilized in my previous roles. With my experience in cloud engineering and a strong foundation in programming languages like Python, I'd love to explore how my skills can contribute to your team's success with AWS EKS and Kubernetes.",
+  //     },
+  //     {
+  //       id: "a6440697-00a7-4115-bf0b-f7d25c5c63e6",
+  //       content:
+  //         "Allan Imire\nSenior Software Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, RemixJS, NextJS, React, Redux, Javascript, Typescript, Python, Django, Express, TailwindCSS, HTML5, CSS3,\nGraphQL, RESTful APIs, Git, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nSoftware Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 8,
+  //       reasoning:
+  //         "The candidate's experience with tech stacks such as Node.js, Docker, and AWS, as well as CI/CD tools like Github Actions, shows a strong overlap with the job description's requirements, although Python experience is not explicitly highlighted in their work history.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was excited to see the emphasis on Python, Docker, and AWS EKS, which align with my experience in cloud-based technologies and containerization using Docker. I'd love to explore how my skills in tech stacks like Node.js and AWS, as well as my experience with CI/CD pipelines, could contribute to your team's success.",
+  //     },
+  //     {
+  //       id: "a6440697-00a7-4115-bf0b-f7d25c5c63e6",
+  //       content:
+  //         "Allan Imire\nSenior Software Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, RemixJS, NextJS, React, Redux, Javascript, Typescript, Python, Django, Express, TailwindCSS, HTML5, CSS3,\nGraphQL, RESTful APIs, Git, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nSoftware Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 8,
+  //       reasoning:
+  //         "The candidate's experience with tech stacks such as Node.js, Docker, and AWS, as well as CI/CD tools like Github Actions, shows a strong overlap with the job description's requirements, although Python experience is not explicitly highlighted in their work history.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was excited to see the emphasis on Python, Docker, and AWS EKS, which align with my experience in cloud-based technologies and containerization using Docker. I'd love to explore how my skills in tech stacks like Node.js and AWS, as well as my experience with CI/CD pipelines, could contribute to your team's success.",
+  //     },
+  //     {
+  //       id: "a6440697-00a7-4115-bf0b-f7d25c5c63e6",
+  //       content:
+  //         "Allan Imire\nSenior Software Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, RemixJS, NextJS, React, Redux, Javascript, Typescript, Python, Django, Express, TailwindCSS, HTML5, CSS3,\nGraphQL, RESTful APIs, Git, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nSoftware Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 8,
+  //       reasoning:
+  //         "The candidate's experience with tech stacks such as Node.js, Docker, and AWS, as well as CI/CD tools like Github Actions, shows a strong overlap with the job description's requirements, although Python experience is not explicitly highlighted in their work history.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was excited to see the emphasis on Python, Docker, and AWS EKS, which align with my experience in cloud-based technologies and containerization using Docker. I'd love to explore how my skills in tech stacks like Node.js and AWS, as well as my experience with CI/CD pipelines, could contribute to your team's success.",
+  //     },
+  //     {
+  //       id: "a6440697-00a7-4115-bf0b-f7d25c5c63e6",
+  //       content:
+  //         "Allan Imire\nSenior Software Engineer\nNairobi, Kenya\n \nallanimire@gmail.com\n \n+254727035069\n \nKenyan\n \nLinkedIn\n \nGithub\n \nPortfolio\n \nSkills\nTech Stack — Node.js, RemixJS, NextJS, React, Redux, Javascript, Typescript, Python, Django, Express, TailwindCSS, HTML5, CSS3,\nGraphQL, RESTful APIs, Git, Docker, GCP, AWS, Github Actions, Gitlab CI/CD.\nWork Experience\nAthena\nPlatform Engineer\n04/2024 – 12/2025\n•Built and deployed HubSpot–EMS integrations automating employee lifecycle syncing, saving 50+ hours monthly and \nimproving data accuracy by ~80%.\n•Developed Node.js scripts using the HubSpot API to enforce 1:1 Deal–Ticket relationships, cutting CRM errors by 70% and \nenhancing reporting reliability.\n•Architected the HubSpot→Workday integration framework with secure API payloads, OAuth2, and governance workflows, \nenabling scalable future automations.\nTDi Sustainability\nSoftware Engineer\n04/2022 – 08/2023 | London, UK",
+  //       score: 8,
+  //       reasoning:
+  //         "The candidate's experience with tech stacks such as Node.js, Docker, and AWS, as well as CI/CD tools like Github Actions, shows a strong overlap with the job description's requirements, although Python experience is not explicitly highlighted in their work history.",
+  //       nudge:
+  //         "Hi, I came across the Software Engineer role at your company and was excited to see the emphasis on Python, Docker, and AWS EKS, which align with my experience in cloud-based technologies and containerization using Docker. I'd love to explore how my skills in tech stacks like Node.js and AWS, as well as my experience with CI/CD pipelines, could contribute to your team's success.",
+  //     },
+  //   ],
+  // };
   return { initialMatches: [] as CVMatch[] };
 }
 
@@ -105,7 +170,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
 
   return (
     <PageWrapper>
-      <div className="flex flex-col lg:flex-row h-screen bg-white overflow-hidden">
+      <div className="flex flex-col lg:flex-row h-screen bg-white py-2 min-h-0">
         {/* LEFT COLUMN: Discovery Sidebar */}
         <div
           className={cn(
@@ -156,14 +221,14 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
             </AnimatePresence>
           </div>
 
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
               {isSearching ? (
                 <div className="p-6 space-y-4">
                   {[1, 2, 3].map((i) => (
                     <div
                       key={i}
-                      className="h-32 bg-gray-50 animate-pulse rounded-[2rem]"
+                      className="h-32 bg-gray-50 animate-pulse rounded-4xl"
                     />
                   ))}
                 </div>
@@ -190,7 +255,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
         {/* RIGHT COLUMN: Strategy Dashboard */}
         <main
           className={cn(
-            "flex-1 bg-gray-50/30 overflow-y-auto overflow-x-hidden relative transition-colors duration-500",
+            "flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative transition-colors duration-500",
             !selectedMatch
               ? "hidden lg:flex flex-col items-center justify-center"
               : "flex flex-col",
@@ -215,8 +280,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                // max-w-6xl ensures the content stays centered and contained on ultra-wide screens
-                className="p-6 md:p-12 max-w-6xl mx-auto space-y-8 w-full"
+                className="flex-1 overflow-y-auto p-6 md:p-12 pb-24 space-y-8"
               >
                 {/* 1. Analysis Overview Grid */}
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
@@ -249,7 +313,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                 </div>
 
                 {/* 2. Outreach Nudge Card */}
-                <section className="bg-[#1a1d23] text-white p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden border border-white/5">
+                <section className="bg-[#1a1d23] text-white p-8 md:p-12 rounded-[3rem] shadow-2xl relative overflow-hidden border border-white/5 flex flex-col">
                   <div className="flex md:flex-col gap-4 mb-8 relative z-10">
                     <div className="flex items-center gap-3 w-1/2 md:w-full">
                       <div className="p-2.5 bg-blue-500/20 rounded-xl text-blue-400">
@@ -260,15 +324,13 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                       </h3>
                     </div>
                   </div>
-
                   <p className="text-xl md:text-2xl font-bold leading-relaxed text-gray-100 relative z-10 break-words">
                     {selectedMatch.nudge}
                   </p>
-
                   <button
                     onClick={() => handleCopy(selectedMatch.nudge)}
                     className={cn(
-                      "flex items-center justify-end gap-2 px-6 my-2 py-3 rounded-2xl text-xs font-black transition-all active:scale-95 shadow-lg w-full sm:w-auto justify-self-end-safe",
+                      "flex items-center justify-center gap-2 px-4 py-2 mt-6 rounded-full text-[11px] font-black transition-all active:scale-95 shadow-lg w-auto self-end sm:px-6 sm:py-3 sm:text-xs",
                       copied
                         ? "bg-emerald-500 text-white"
                         : "bg-white text-black hover:bg-blue-50",
@@ -281,7 +343,6 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     )}
                     {copied ? "Copied!" : "Copy Nudge"}
                   </button>
-
                   <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
                 </section>
 
@@ -290,8 +351,8 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                   <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.4em] ml-2">
                     Source Context
                   </h4>
-                  <div className="p-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm text-gray-600 leading-relaxed font-medium overflow-hidden">
-                    <p className="text-base leading-loose italic break-words">
+                  <div className="p-10 bg-white rounded-[2.5rem] border border-gray-100 shadow-sm text-gray-600 leading-relaxed font-medium overflow-y-auto">
+                    <p className="text-base leading-loose italic wrap-break-word">
                       {selectedMatch.content}
                     </p>
                   </div>

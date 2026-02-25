@@ -10,6 +10,7 @@ import {
 import type { Route } from "./+types/root";
 import "./app.css";
 import { GlobalSpinner } from "./components/GlobalSpinner";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const meta: Route.MetaFunction = () => [
   { title: "ApplyFlow" },
@@ -54,8 +55,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <>
-      <GlobalSpinner />
-      <Outlet />
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+        <GlobalSpinner />
+        <Outlet />
+      </GoogleOAuthProvider>
     </>
   );
 }

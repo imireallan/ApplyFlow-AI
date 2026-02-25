@@ -1,7 +1,13 @@
-import { Link, NavLink } from "react-router";
+import { Link, NavLink, redirect } from "react-router";
 import { FileUp, Search, Target, PenTool, Mic2, Sparkles } from "lucide-react";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 import { Svg } from "~/components/SvgLogo";
+import type { Route } from "./+types/dashboard_layout";
+import { requireUser } from "~/.server/sessions";
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await requireUser(request);
+};
 
 export default function DashboardLayout() {
   return (

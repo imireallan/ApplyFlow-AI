@@ -1,8 +1,9 @@
 import os
 import shutil
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, Request, UploadFile, File, HTTPException
 from services.vector_service import VectorService
 from models.schema import QueryRequest
+from routes.auth_routes import get_current_user
 
 router = APIRouter()
 vector_service = VectorService()
@@ -10,10 +11,11 @@ UPLOAD_DIR = "temp_uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/search-cv")
-async def search_cv(request: QueryRequest):
+async def search_cv(request: Request, payload: QueryRequest):
+    get_current_user(request)
     try:
         results = vector_service.query_cv(
-            job_description=request.job_description, 
+            job_description=payload.job_description, 
             k=request.top_k
         )
         return {"status": "success", "matches": results}
@@ -21,7 +23,8 @@ async def search_cv(request: QueryRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/index-cv")
-async def index_cv(file: UploadFile = File(...)):
+async def index_cv(request: Request, file: UploadFile = File(...)):
+    get_current_user(request)
     if not file.filename.endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Only PDF files are supported.")
 

@@ -7,8 +7,8 @@ services:
     ports:
       - "5173:5173"
       - "5679:5678"
-    environment:
-      - VITE_AI_API_URL=http://ai_engine:8000
+    env_file:
+      - .env
     command: npm run dev -- --host 0.0.0.0
     volumes:
       - ./frontend:/app

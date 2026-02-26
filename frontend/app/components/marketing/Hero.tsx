@@ -76,7 +76,7 @@ export function Hero() {
 
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <Button
-            onClick={() => navigate("/app")}
+            onClick={() => navigate("/login")}
             className="w-full sm:w-auto px-6 shadow-xl shadow-blue-500/20"
           >
             Start Now - It's Free

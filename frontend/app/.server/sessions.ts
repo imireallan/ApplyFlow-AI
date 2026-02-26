@@ -59,8 +59,6 @@ export async function getUserFromRequest(request: Request) {
   const session = await getSession(request);
   const userToken = session.get(USER_SESSION_KEY);
 
-  console.log({ userToken });
-
   const res = await fetch(`${API_URL}/auth/me`, {
     headers: { cookie: userToken ?? "" },
     credentials: "include",
@@ -77,8 +75,6 @@ export async function getUserFromRequest(request: Request) {
 export async function requireUser(request: Request) {
   const user = await getUserFromRequest(request);
 
-  console.log({ user });
-
   if (!user) {
     const url = new URL(request.url);
     const searchParams = new URLSearchParams([["redirectTo", url.pathname]]);
@@ -86,7 +82,7 @@ export async function requireUser(request: Request) {
     throw redirect(`/login?${searchParams}`);
   }
 
-  return user;
+  return user.data
 }
 
 export async function getUserToken(request: Request) {

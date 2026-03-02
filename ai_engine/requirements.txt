@@ -19,7 +19,6 @@ certifi==2026.1.4
 charset-normalizer==3.4.4
 click==8.3.1
 dataclasses-json==0.6.7
-debugpy==1.8.20
 distro==1.9.0
 fastapi==0.129.0
 filelock==3.21.2
@@ -75,6 +74,7 @@ pydantic-settings==2.12.0
 pydantic_core==2.41.5
 PyJWT==2.11.0
 pypdf==6.7.0
+psycopg2-binary==2.9.11
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.1
 python-multipart==0.0.22

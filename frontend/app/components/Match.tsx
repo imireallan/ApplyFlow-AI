@@ -24,7 +24,7 @@ export function Match({ match, selectedMatch, setSelectedMatch }: MatchProps) {
           : "bg-white border-gray-100 hover:border-blue-200 shadow-sm",
       )}
     >
-      <Score score={match.score} />
+      <Score score={match.match_score} />
 
       <div className="pr-12 space-y-3">
         <div className="flex items-center gap-2">

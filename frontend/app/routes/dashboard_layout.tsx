@@ -1,27 +1,27 @@
-import { Link, NavLink, Form } from "react-router";
 import {
   FileUp,
-  Search,
-  Target,
-  PenTool,
-  Mic2,
-  Sparkles,
   LogOut,
+  Mic2,
+  PenTool,
+  Search,
   Settings,
+  Sparkles,
+  Target,
 } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
+import { Form, Link, NavLink, data } from "react-router";
+import { logout } from "~/.server/auth";
+import { requireUser } from "~/.server/sessions";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 import { Svg } from "~/components/SvgLogo";
-import type { Route } from "./+types/dashboard_layout";
-import { requireUser } from "~/.server/sessions";
-import { logout } from "~/.server/auth";
-import { motion, AnimatePresence } from "motion/react";
-import { useState } from "react";
 import type { User } from "~/types/user";
+import type { Route } from "./+types/dashboard_layout";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user: User = await requireUser(request);
 
-  return { user };
+  return data({ user });
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -34,8 +34,8 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
 
   // Get initials from user name or email
   const getInitials = () => {
-    if (user?.name) {
-      return user.name
+    if (user?.full_name) {
+      return user.full_name
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -75,7 +75,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
         </div>
       </nav>
 
-      {/* Profile Dropdown - Fixed position relative to header */}
+      {/* Profile Dropdown - Absolute position relative to main */}
       <AnimatePresence>
         {isProfileOpen && (
           <motion.div
@@ -83,12 +83,12 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="fixed top-16 right-2 z-50"
+            className="absolute top-16 right-4 md:right-6 z-50"
           >
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden w-48">
               <div className="p-3 border-b border-gray-100">
                 <p className="text-sm font-semibold text-gray-900 truncate">
-                  {user?.name || "User"}
+                  {user?.first_name || "User"}
                 </p>
                 <p className="text-xs text-gray-500 truncate">
                   {user?.email || "user@example.com"}
@@ -178,7 +178,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
                 {getInitials()}
               </div>
               <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {user?.name?.split(" ")[0] || "User"}
+                {user?.first_name?.split(" ")[0] || "User"}
               </span>
             </button>
           </div>

@@ -1,4 +1,5 @@
-import { redirect, data, createCookieSessionStorage } from "react-router";
+import { createCookieSessionStorage, data, redirect } from "react-router";
+import type { User } from "~/types/user";
 
 const API_URL = import.meta.env.VITE_AI_API_URL;
 
@@ -69,7 +70,16 @@ export async function getUserFromRequest(request: Request) {
   }
 
   const payload = await res.json();
-  return data(payload.user, { status: 200 });
+
+  const user: User = {
+    id: payload.id,
+    email: payload.email,
+    full_name: payload.full_name,
+    first_name: payload.first_name,
+    last_name: payload.last_name,
+    picture_url: payload.picture_url,
+  };
+  return data(user, { status: 200 });
 }
 
 export async function requireUser(request: Request) {
@@ -82,7 +92,7 @@ export async function requireUser(request: Request) {
     throw redirect(`/login?${searchParams}`);
   }
 
-  return user.data
+  return user.data;
 }
 
 export async function getUserToken(request: Request) {

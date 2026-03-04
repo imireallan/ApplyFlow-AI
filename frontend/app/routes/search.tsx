@@ -1,23 +1,23 @@
-import { Form, useNavigation } from "react-router";
-import { useState, useEffect } from "react";
 import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  ClipboardIcon,
+  MessageSquare,
   Search as SearchIcon,
   Sparkles,
-  MessageSquare,
-  ClipboardIcon,
-  CheckCircle,
-  ArrowLeft,
-  AlertCircle,
 } from "lucide-react";
-import type { Route } from "./+types/search";
-import type { CVMatch } from "~/types/ai";
+import { AnimatePresence, motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { Form, useNavigation } from "react-router";
 import { Button } from "~/components/Button";
 import { MatchList } from "~/components/MatchList";
-import { cn } from "~/lib/utils";
-import { AnimatePresence, motion } from "motion/react";
 import { PageWrapper } from "~/components/PageWrapper";
+import { cn, toPercentage } from "~/lib/utils";
+import type { CVMatch } from "~/types/ai";
+import type { Route } from "./+types/search";
 
-const API_URL = `${import.meta.env.VITE_AI_API_URL}/agent/process`;
+const API_URL = `${import.meta.env.VITE_AI_API_URL}/job/process`;
 
 export async function loader() {
   // await delay(5000)
@@ -143,6 +143,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function CVSearch({ actionData }: Route.ComponentProps) {
+  console.log("Action Data:", actionData);
   const results = actionData?.results ?? [];
   const error = actionData?.error;
 
@@ -291,7 +292,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     </h3>
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl font-black text-blue-600 leading-none">
-                        {selectedMatch.score}
+                        {toPercentage(selectedMatch.match_score)}
                       </span>
                       <span className="text-gray-300 text-2xl font-bold">
                         / 10

@@ -1,27 +1,25 @@
-import { redirect, data, createCookieSessionStorage } from "react-router";
+import { data, redirect } from "react-router";
+import type { User } from "~/types/user";
 
 const API_URL = import.meta.env.VITE_AI_API_URL;
+const COOKIE_NAME = "access_token";
 
-const USER_SESSION_KEY = "access_token";
-type SessionData = {
-  access_token: string;
-};
+/**
+ * Get the raw JWT token from the request cookie
+ */
+export function getAccessToken(request: Request): string | null {
+  const cookieHeader = request.headers.get("Cookie");
+  if (!cookieHeader) return null;
 
-type SessionFlashData = {
-  error: string;
-};
+  // Parse access_token from cookie string
+  const match = cookieHeader.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+  return match ? match[1] : null;
+}
 
-const sessionStorage = createCookieSessionStorage<
-  SessionData,
-  SessionFlashData
->({
-  cookie: {
-    name: "__session",
-  },
-});
-
+/**
+ * Create a session by setting the access_token cookie
+ */
 export async function createTokenSession({
-  request,
   accessToken,
   redirectTo,
 }: {
@@ -29,38 +27,32 @@ export async function createTokenSession({
   accessToken: string;
   redirectTo: string;
 }) {
-  const session = await getSession(request);
-
-  session.set(USER_SESSION_KEY, accessToken);
   return redirect(redirectTo, {
     headers: {
-      "Set-Cookie": await sessionStorage.commitSession(session, {
-        maxAge: 60 * 60 * 24 * 7, // expires in 7 days
-      }),
+      "Set-Cookie": `${COOKIE_NAME}=${accessToken}`,
     },
   });
 }
-export async function destroyTokenSession(request: Request) {
-  const session = await getSession(request);
 
+/**
+ * Destroy the session by clearing the cookie
+ */
+export async function destroyTokenSession(request: Request) {
   return redirect("/login", {
     headers: {
-      "Set-Cookie": await sessionStorage.destroySession(session),
+      "Set-Cookie": `${COOKIE_NAME}=`,
     },
   });
 }
 
-export async function getSession(request: Request) {
-  const cookie = request.headers.get("Cookie");
-  return sessionStorage.getSession(cookie);
-}
-
+/**
+ * Get user from request by calling the backend API
+ */
 export async function getUserFromRequest(request: Request) {
-  const session = await getSession(request);
-  const userToken = session.get(USER_SESSION_KEY);
+  const cookieHeader = request.headers.get("Cookie");
 
   const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { cookie: userToken ?? "" },
+    headers: { cookie: cookieHeader ?? "" },
     credentials: "include",
   });
 
@@ -69,9 +61,21 @@ export async function getUserFromRequest(request: Request) {
   }
 
   const payload = await res.json();
-  return data(payload.user, { status: 200 });
+
+  const user: User = {
+    id: payload.id,
+    email: payload.email,
+    full_name: payload.full_name,
+    first_name: payload.first_name,
+    last_name: payload.last_name,
+    picture_url: payload.picture_url,
+  };
+  return data(user, { status: 200 });
 }
 
+/**
+ * Require a user - throws redirect to login if not authenticated
+ */
 export async function requireUser(request: Request) {
   const user = await getUserFromRequest(request);
 
@@ -82,16 +86,19 @@ export async function requireUser(request: Request) {
     throw redirect(`/login?${searchParams}`);
   }
 
-  return user.data
+  return user.data;
 }
 
+/**
+ * Get the user token from the request
+ */
 export async function getUserToken(request: Request) {
-  const session = await getSession(request);
-  const userToken = session.get(USER_SESSION_KEY);
-  console.log({ userToken });
-  return userToken;
+  return getAccessToken(request);
 }
 
+/**
+ * Require a user token - throws redirect to login if not present
+ */
 export async function requireUserToken(
   request: Request,
   redirectTo: string = new URL(request.url).pathname,

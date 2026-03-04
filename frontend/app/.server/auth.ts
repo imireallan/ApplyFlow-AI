@@ -29,8 +29,18 @@ export async function login(
       );
     }
 
-    const accessToken = res.headers.get("set-cookie") as string;
-    console.log({ accessToken });
+    const setCookieHeader = res.headers.get("set-cookie") as string;
+    // Parse the token value from the Set-Cookie header
+    const accessTokenMatch = setCookieHeader.match(/access_token=([^;]+)/);
+    const accessToken = accessTokenMatch ? accessTokenMatch[1] : null;
+
+    if (!accessToken) {
+      return data(
+        { error: "Login failed. Could not get session token." },
+        { status: 500 },
+      );
+    }
+
     return await createTokenSession({
       request,
       accessToken,

@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
+import { toPercentage } from "~/lib/utils";
 
 export function Score({ score }: { score: number }) {
   const normalizedScore = score > 1 ? score / 10 : score;
-  const percentage = Math.round(normalizedScore * 100);
+  const percentage = toPercentage(normalizedScore);
 
   const radius = 18;
   const circumference = 2 * Math.PI * radius;

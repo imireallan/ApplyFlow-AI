@@ -30,7 +30,6 @@ export async function login(
     }
 
     const accessToken = res.headers.get("set-cookie") as string;
-    console.log({ accessToken });
     return await createTokenSession({
       request,
       accessToken,

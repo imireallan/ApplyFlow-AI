@@ -34,7 +34,7 @@ class GoogleUserInfo(BaseModel):
         extra = "ignore"  # Ignore extra fields from Google
 
 
-@router.post("/google")
+@router.post("/google")  # noqa: misc
 def login_google(
     payload: GoogleLoginRequest,
     response: Response,
@@ -71,12 +71,12 @@ def login_google(
     return {"message": "Login successful"}
 
 
-@router.get("/me")
+@router.get("/me")  # noqa: misc
 def get_me(current_user: CurrentUser) -> User:
     return current_user
 
 
-@router.post("/logout")
+@router.post("/logout")  # noqa: misc
 def logout(response: Response) -> dict[str, str]:
     response.delete_cookie("access_token")
     return {"message": "Logged out"}

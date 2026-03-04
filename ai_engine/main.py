@@ -5,10 +5,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
+from api.routes import auth_routes, cv_routes, job_routes
 from core.config.settings import settings
 from core.database import engine
 from infrastructure.db.create_tables import create_tables
-from routes import agent_routes, auth_routes, cv_routes
 
 
 @asynccontextmanager
@@ -45,11 +45,11 @@ app.add_middleware(
 )
 
 app.include_router(auth_routes.router, prefix="/auth", tags=["Auth"])
-app.include_router(agent_routes.router, prefix="/agent", tags=["Agent Operations"])
+app.include_router(job_routes.router, prefix="/job", tags=["Job Operations"])
 app.include_router(cv_routes.router, prefix="/cv", tags=["CV Operations"])
 
 
-@app.get("/health")
+@app.get("/health")  # noqa: misc
 def health_check() -> dict[str, str]:
     try:
         with engine.connect() as connection:

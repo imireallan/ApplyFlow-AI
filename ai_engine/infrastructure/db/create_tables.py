@@ -1,6 +1,6 @@
 from core.database import Base, engine
-from infrastructure.db.models.user_model import (  # pyright: ignore[reportUnusedImport]
-    UserORM,
+from infrastructure.db.models.user_model import (
+    UserORM,  # pyright: ignore[reportUnusedImport]
 )
 
 

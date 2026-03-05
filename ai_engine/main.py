@@ -8,22 +8,15 @@ from sqlalchemy import text
 from api.routes import auth_routes, cv_routes, job_routes
 from core.config.settings import settings
 from core.database import engine
-from infrastructure.db.create_tables import create_tables
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):  # type: ignore
     print("🚀 Starting ApplyFlow AI Engine")
+
     try:
         with engine.connect() as connection:
             connection.execute(text("SELECT 1"))
-            if settings.ENV == "development":
-                try:
-                    create_tables()
-                    print("✅ Database Tables Created")
-                except Exception as e:
-                    print("❌ Failed to Create Database Tables:", e)
-                    raise e
         print("✅ Database Connected")
     except Exception as e:
         print("❌ Database Connection Failed:", e)

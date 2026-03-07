@@ -1,7 +1,6 @@
 import { data } from "react-router";
+import { apiRequestHandler } from "./apiRequestHandler";
 import { createTokenSession, destroyTokenSession } from "./sessions";
-
-const API_URL = import.meta.env.VITE_AI_API_URL;
 
 export async function login(
   request: Request,
@@ -11,28 +10,26 @@ export async function login(
     return data({ error: "Google authentication failed." }, { status: 400 });
   }
 
-  let url = `${API_URL}/auth/google`;
-
   try {
-    const res = await fetch(url, {
+    // Use raw: true to get the Response object directly
+    const response = (await apiRequestHandler(request, {
+      endpoint: "/auth/google",
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id_token: credential }),
-    });
+      raw: true,
+    })) as Response;
 
-    if (!res.ok) {
-      const errorMsg = await res.json().catch(() => null);
-
+    if (!response.ok) {
+      const errorMsg = await response.json().catch(() => null);
       return data(
         { error: errorMsg?.message || "Login failed. Try again." },
         { status: 401 },
       );
     }
 
-    const setCookieHeader = res.headers.get("set-cookie") as string;
-    // Parse the token value from the Set-Cookie header
-    const accessTokenMatch = setCookieHeader.match(/access_token=([^;]+)/);
-    const accessToken = accessTokenMatch ? accessTokenMatch[1] : null;
+    // Get token from response body
+    const payload = await response.json();
+    const accessToken = payload.access_token;
 
     if (!accessToken) {
       return data(
@@ -56,9 +53,9 @@ export async function login(
 }
 
 export async function logout(request: Request) {
-  await fetch(`${API_URL}/auth/logout`, {
+  await apiRequestHandler(request, {
+    endpoint: "/auth/logout",
     method: "POST",
-    credentials: "include",
   });
 
   return destroyTokenSession(request);

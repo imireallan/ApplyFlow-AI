@@ -1,9 +1,10 @@
 import { redirect } from "react-router";
-import type { Route } from "./+types/upload";
-import { UploadForm } from "~/components/UploadForm";
+import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { PageWrapper } from "~/components/PageWrapper";
+import { UploadForm } from "~/components/UploadForm";
+import type { Route } from "./+types/upload";
 
-const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/index-cv`;
+// const API_URL = `${import.meta.env.VITE_AI_API_URL}/cv/index-cv`;
 
 export async function loader() {
   return null;
@@ -20,23 +21,48 @@ export async function action({ request }: Route.ActionArgs) {
   const apiData = new FormData();
   apiData.append("file", file);
 
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      body: apiData,
-    });
+  const result = await apiRequestHandler(request, {
+    endpoint: "/cv/index-cv",
+    method: "POST",
+    body: apiData,
+  });
 
-    const data = await response.json()
-
-    if (response.ok) {
-      // After successful indexing, redirect to the search page
-      return redirect("/app/search");
-    }
-    return { error: data.detail };
-  } catch (err) {
-    return { error: "Network error connecting to AI Engine." };
+  // Check for errors in result
+  if (result.data?.error) {
+    return { error: result.data.error };
   }
+
+  return redirect("/app/search");
 }
+
+// export async function action({ request }: Route.ActionArgs) {
+//   const formData = await request.formData();
+//   const file = formData.get("file");
+
+//   if (!file || !(file instanceof File)) {
+//     return { error: "Please select a valid PDF file." };
+//   }
+
+//   const apiData = new FormData();
+//   apiData.append("file", file);
+
+//   try {
+//     const response = await fetch(API_URL, {
+//       method: "POST",
+//       body: apiData,
+//     });
+
+//     const data = await response.json()
+
+//     if (response.ok) {
+//       // After successful indexing, redirect to the search page
+//       return redirect("/app/search");
+//     }
+//     return { error: data.detail };
+//   } catch (err) {
+//     return { error: "Network error connecting to AI Engine." };
+//   }
+// }
 
 export default function UploadPage({ actionData }: Route.ComponentProps) {
   return (

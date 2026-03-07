@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
@@ -10,7 +10,13 @@ from langchain_openai import ChatOpenAI
 from core.application.models.match import MatchAnalysis
 from core.application.ports.llm_port import LLMPort
 from core.domain.exceptions import LLMError
-from models.prompts import NUDGE_SYSTEM_PROMPT, NUDGE_USER_PROMPT
+from core.domain.models.cv_profile import ExtractedCVProfile
+from models.prompts import (
+    CV_PROFILE_SYSTEM_PROMPT,
+    CV_PROFILE_USER_PROMPT,
+    NUDGE_SYSTEM_PROMPT,
+    NUDGE_USER_PROMPT,
+)
 
 
 class LangChainLLMAdapter(LLMPort):
@@ -22,27 +28,36 @@ class LangChainLLMAdapter(LLMPort):
     def __init__(self) -> None:
         self.provider = os.getenv("LLM_PROVIDER", "groq").lower()
 
-        self.llm: BaseChatModel
-
         if self.provider == "openai":
-            self.llm = ChatOpenAI(
+            self.llm: BaseChatModel = ChatOpenAI(
                 model="gpt-4o-mini",
-                temperature=0.7,
+                temperature=0,
             )
         else:
             self.llm = ChatGroq(
                 model_name="llama-3.3-70b-versatile",
-                temperature=0.7,
+                temperature=0,
             )
 
-        self.prompt = ChatPromptTemplate.from_messages(
+        self.prompt: Any = ChatPromptTemplate.from_messages(
             [
                 ("system", NUDGE_SYSTEM_PROMPT),
                 ("user", NUDGE_USER_PROMPT),
             ]
         )
 
-        self.chain = self.prompt | self.llm | JsonOutputParser()
+        self.chain: Any = self.prompt | self.llm | JsonOutputParser()
+
+        self.cv_profile_prompt: Any = ChatPromptTemplate.from_messages(
+            [
+                ("system", CV_PROFILE_SYSTEM_PROMPT),
+                ("user", CV_PROFILE_USER_PROMPT),
+            ]
+        )
+
+        self.cv_profile_chain: Any = (
+            self.cv_profile_prompt | self.llm | JsonOutputParser()
+        )
 
     def analyze_match(
         self,
@@ -69,3 +84,22 @@ class LangChainLLMAdapter(LLMPort):
 
         except Exception as e:
             raise LLMError(f"LLM analysis failed: {str(e)}") from e
+
+    def extract_cv_profile(self, cv_content: str) -> ExtractedCVProfile:
+        try:
+            response: dict[str, Any] = self.cv_profile_chain.invoke(
+                {
+                    "cv_text": cv_content,
+                }
+            )
+
+            return ExtractedCVProfile(
+                name=response.get("name", ""),
+                summary=response.get("summary", ""),
+                skills=response.get("skills", []),
+                experience=response.get("experience", []),
+                education=response.get("education", []),
+            )
+
+        except Exception as e:
+            raise LLMError(f"CV profile extraction failed: {str(e)}") from e

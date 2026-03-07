@@ -11,11 +11,30 @@ from infrastructure.db.repositories.user_repository_sqlalchemy import (
 from infrastructure.db.session import get_db
 
 
+def extract_token_from_header(request: Request) -> str | None:
+    """Extract JWT token from Authorization header (Bearer token)."""
+    auth_header = request.headers.get("Authorization")
+    if not auth_header:
+        return None
+
+    # Expecting "Bearer <token>" format
+    parts = auth_header.split()
+    if len(parts) != 2 or parts[0].lower() != "bearer":
+        return None
+
+    return parts[1]
+
+
 def get_current_user(
     request: Request,
     db: Session = Depends(get_db),
 ) -> User:
-    token = request.cookies.get("access_token")
+    # First try Authorization header, then fall back to cookie for backward compatibility
+    token = extract_token_from_header(request)
+
+    if not token:
+        # Fallback to cookie for backward compatibility
+        token = request.cookies.get("access_token")
 
     if not token:
         raise HTTPException(

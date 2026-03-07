@@ -1,13 +1,10 @@
+from dataclasses import dataclass
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel as PyBaseModel
 
-
-class BaseModel(PyBaseModel):
+@dataclass(kw_only=True)
+class BaseModel:
     id: UUID
-    created_at: datetime
-    updated_at: datetime
-
-    class Config:
-        from_attributes = True
+    created_at: datetime | None = None
+    updated_at: datetime | None = None

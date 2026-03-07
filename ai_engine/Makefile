@@ -11,7 +11,7 @@ compose ?= yes
 # Docker Compose service name
 SERVICE_NAME := ai_engine
 
-.PHONY: help migrate makemigration init downgrade current history check stamp
+.PHONY: help migrate makemigration init downgrade current history check stamp stamp-head
 
 help:
 	@echo "ApplyFlow AI - Database Migration Commands"
@@ -113,6 +113,15 @@ stamp:
 	else \
 		echo "Stamping migration $(revision) locally..."; \
 		alembic stamp $(revision); \
+	fi
+
+stamp-head:
+	@if [ "$(compose)" = "yes" ]; then \
+		echo "Stamping to latest migration (head) in Docker Compose..."; \
+		docker compose exec $(SERVICE_NAME) alembic stamp head; \
+	else \
+		echo "Stamping to latest migration (head) locally..."; \
+		alembic stamp head; \
 	fi
 
 check:

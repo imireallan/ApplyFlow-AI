@@ -1,118 +1,173 @@
-import os
 from typing import Any
 
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_pinecone import PineconeVectorStore
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
+from pinecone.exceptions import NotFoundException, PineconeException
 
+from api.exception_handlers import VectorStoreError as HTTPVectorStoreError
 from core.application.models.match import MatchSimilarityScore
 from core.application.ports.vector_store_port import VectorStorePort
-from core.domain.exceptions import VectorStoreError
+from core.config.settings import settings
 
 
 class PineconeVectorStoreAdapter(VectorStorePort):
-    """
-    Infrastructure adapter for Pinecone vector storage.
-    Handles CV indexing and similarity search.
-    """
 
     def __init__(self) -> None:
-        self.index_name = os.getenv("PINECONE_INDEX_NAME", "applyflow-cvs")
-        self.api_key = os.getenv("PINECONE_API_KEY")
+        # Initialize embeddings based on provider
+        if settings.EMBEDDING_PROVIDER == "huggingface":
+            self.embeddings: Embeddings = HuggingFaceEmbeddings(
+                model=settings.HUGGINGFACE_EMBEDDING_MODEL,
+            )
+        else:
+            self.embeddings = OpenAIEmbeddings()
 
-        if not self.api_key:
-            raise VectorStoreError("PINECONE_API_KEY is not set.")
-
-        self.pc = Pinecone(api_key=self.api_key)
-
-        self.spec: ServerlessSpec = ServerlessSpec(
-            cloud="aws",
-            region="us-east-1",
-        )
-
-        # Local embedding model
-        self.embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
-        self._ensure_index_exists()
-
-    def _ensure_index_exists(self) -> None:
         try:
-            indexes = self.pc.list_indexes()
-            existing_indexes: list[str] = [idx.name for idx in indexes]
+            pc = Pinecone(api_key=settings.PINECONE_API_KEY)
 
-            if self.index_name not in existing_indexes:
-                self.pc.create_index(
-                    name=self.index_name,
-                    dimension=384,
+            dimension = len(self.embeddings.embed_query("test"))
+
+            index_name = settings.PINECONE_INDEX_NAME
+
+            if index_name not in [i.name for i in pc.list_indexes()]:
+
+                pc.create_index(
+                    name=index_name,
+                    dimension=dimension,
                     metric="cosine",
-                    spec=self.spec,
+                    spec=ServerlessSpec(
+                        cloud="aws",
+                        region="us-east-1",
+                    ),
                 )
-
+            self.index: Any = pc.Index(index_name)
+        except NotFoundException as e:
+            raise HTTPVectorStoreError(
+                detail="Vector store index not found. Please try again later.",
+                log_message=f"Pinecone index 'applyflow-cv-index' not found: {str(e)}",
+            ) from e
         except Exception as e:
-            raise VectorStoreError(
-                f"Failed to initialize Pinecone index: {str(e)}"
+            raise HTTPVectorStoreError(
+                detail="Failed to connect to vector store. Please try again later.",
+                log_message=f"Failed to connect to Pinecone: {str(e)}",
             ) from e
 
-    def upsert(self, file_path: str) -> dict[str, Any]:
-        """
-        Load PDF, split into chunks, and store embeddings in Pinecone.
-        """
+    def upsert(
+        self,
+        vector_id: str,
+        content: str,
+        user_id: str,
+    ) -> dict[str, Any]:
+
         try:
-            loader = PyPDFLoader(file_path)
-            documents = loader.load()
+            vector = self.embeddings.embed_query(content)
 
-            splitter = RecursiveCharacterTextSplitter(
-                chunk_size=1000,
-                chunk_overlap=100,
+            self.index.upsert(
+                vectors=[
+                    {
+                        "id": vector_id,
+                        "values": vector,
+                        "metadata": {
+                            "content": content,
+                            "user_id": user_id,
+                        },
+                    }
+                ],
+                namespace=user_id,
             )
 
-            docs = splitter.split_documents(documents)
+            return {"status": "success"}
 
-            PineconeVectorStore.from_documents(
-                docs,
-                self.embeddings,
-                index_name=self.index_name,
-            )
-
-            return {
-                "status": "success",
-                "chunks": len(docs),
-            }
-
+        except PineconeException as e:
+            # Handle rate limiting (429) and other Pinecone-specific errors
+            error_code = getattr(e, "code", None)
+            error_str = str(e)
+            if error_code == "ratelimit" or "429" in error_str:
+                raise HTTPVectorStoreError(
+                    detail="Rate limit exceeded. Please try again later.",
+                    log_message=f"Pinecone rate limit exceeded: {error_str}",
+                ) from e
+            # Handle dimension mismatch errors
+            if "dimension" in error_str.lower():
+                raise HTTPVectorStoreError(
+                    detail="Vector dimension mismatch. Please contact support to recreate the Pinecone index with the correct dimension.",
+                    log_message=f"Pinecone dimension mismatch: {error_str}",
+                ) from e
+            # Handle not found errors
+            if isinstance(e, NotFoundException):
+                raise HTTPVectorStoreError(
+                    detail="Vector store index not found. Please try again later.",
+                    log_message=f"Pinecone index not found during upsert: {error_str}",
+                ) from e
+            raise HTTPVectorStoreError(
+                detail="Vector store operation failed. Please try again later.",
+                log_message=f"Pinecone error: {error_str}",
+            ) from e
         except Exception as e:
-            raise VectorStoreError(f"Failed to upsert CV: {str(e)}") from e
+            error_str = str(e)
+            # Check for OpenAI quota errors (429)
+            if "429" in error_str and "quota" in error_str.lower():
+                raise HTTPVectorStoreError(
+                    detail="Embedding service quota exceeded. Please check your plan and billing details.",
+                    log_message=f"OpenAI quota exceeded: {error_str}",
+                ) from e
+            raise HTTPVectorStoreError(
+                detail="Failed to save CV data. Please try again later.",
+                log_message=f"Failed to upsert vector: {error_str}",
+            ) from e
 
-    def query(self, query: str, k: int = 3) -> list[MatchSimilarityScore]:
-        """
-        Perform similarity search against stored CV embeddings.
-        """
+    def query(
+        self,
+        query: str,
+        user_id: str,
+        k: int,
+    ) -> list[MatchSimilarityScore]:
+
         try:
-            vectorstore = PineconeVectorStore(
-                index_name=self.index_name,
-                embedding=self.embeddings,
+            vector = self.embeddings.embed_query(query)
+
+            result = self.index.query(
+                vector=vector,
+                top_k=k,
+                namespace=user_id,
+                include_metadata=True,
             )
 
-            results: list[tuple[Document, float]] = (
-                vectorstore.similarity_search_with_score(query, k=k)
-            )
+            matches: list[MatchSimilarityScore] = []
 
-            formatted_results: list[MatchSimilarityScore] = []
-
-            for doc, score in results:
-                
-                formatted_results.append(
+            for match in result.matches:
+                matches.append(
                     MatchSimilarityScore(
-                        id=str(doc.id),
-                        content=doc.page_content,
-                        match_score=round(float(score), 4),
-                        metadata=doc.metadata ,
+                        id=match.id,
+                        content=match.metadata.get("content", ""),
+                        match_score=match.score,
+                        metadata=match.metadata,
                     )
                 )
 
-            return formatted_results
+            return matches
 
+        except PineconeException as e:
+            error_code = getattr(e, "code", None)
+            if error_code == "ratelimit" or "429" in str(e):
+                raise HTTPVectorStoreError(
+                    detail="Rate limit exceeded. Please try again later.",
+                    log_message=f"Pinecone rate limit exceeded: {str(e)}",
+                ) from e
+            raise HTTPVectorStoreError(
+                detail="Vector store query failed. Please try again later.",
+                log_message=f"Pinecone query error: {str(e)}",
+            ) from e
         except Exception as e:
-            raise VectorStoreError(f"Vector search failed: {str(e)}") from e
+            error_str = str(e)
+            # Check for OpenAI quota errors (429)
+            if "429" in error_str and "quota" in error_str.lower():
+                raise HTTPVectorStoreError(
+                    detail="Embedding service quota exceeded. Please check your plan and billing details.",
+                    log_message=f"OpenAI quota exceeded: {error_str}",
+                ) from e
+            raise HTTPVectorStoreError(
+                detail="Failed to search CVs. Please try again later.",
+                log_message=f"Vector query failed: {error_str}",
+            ) from e

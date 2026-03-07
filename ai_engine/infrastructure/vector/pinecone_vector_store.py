@@ -1,8 +1,9 @@
 from typing import Any
 
+from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
-from pinecone import Pinecone
+from pinecone import Pinecone, ServerlessSpec
 from pinecone.exceptions import NotFoundException, PineconeException
 
 from api.exception_handlers import VectorStoreError as HTTPVectorStoreError
@@ -16,7 +17,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
     def __init__(self) -> None:
         # Initialize embeddings based on provider
         if settings.EMBEDDING_PROVIDER == "huggingface":
-            self.embeddings = HuggingFaceEmbeddings(
+            self.embeddings: Embeddings = HuggingFaceEmbeddings(
                 model=settings.HUGGINGFACE_EMBEDDING_MODEL,
             )
         else:
@@ -40,7 +41,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                         region="us-east-1",
                     ),
                 )
-            self.index = pc.Index(index_name)
+            self.index: Any = pc.Index(index_name)
         except NotFoundException as e:
             raise HTTPVectorStoreError(
                 detail="Vector store index not found. Please try again later.",

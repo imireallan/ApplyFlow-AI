@@ -1,7 +1,7 @@
 import os
 from typing import Any
 
-from langchain_core.language_models.chat_models import BaseChatModel
+from langchain_core.language_models import BaseChatModel
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
@@ -28,10 +28,8 @@ class LangChainLLMAdapter(LLMPort):
     def __init__(self) -> None:
         self.provider = os.getenv("LLM_PROVIDER", "groq").lower()
 
-        self.llm: BaseChatModel
-
         if self.provider == "openai":
-            self.llm = ChatOpenAI(
+            self.llm: BaseChatModel = ChatOpenAI(
                 model="gpt-4o-mini",
                 temperature=0,
             )
@@ -41,23 +39,25 @@ class LangChainLLMAdapter(LLMPort):
                 temperature=0,
             )
 
-        self.prompt = ChatPromptTemplate.from_messages(
+        self.prompt: Any = ChatPromptTemplate.from_messages(
             [
                 ("system", NUDGE_SYSTEM_PROMPT),
                 ("user", NUDGE_USER_PROMPT),
             ]
         )
 
-        self.chain = self.prompt | self.llm | JsonOutputParser()
+        self.chain: Any = self.prompt | self.llm | JsonOutputParser()
 
-        self.cv_profile_prompt = ChatPromptTemplate.from_messages(
+        self.cv_profile_prompt: Any = ChatPromptTemplate.from_messages(
             [
                 ("system", CV_PROFILE_SYSTEM_PROMPT),
                 ("user", CV_PROFILE_USER_PROMPT),
             ]
         )
 
-        self.cv_profile_chain = self.cv_profile_prompt | self.llm | JsonOutputParser()
+        self.cv_profile_chain: Any = (
+            self.cv_profile_prompt | self.llm | JsonOutputParser()
+        )
 
     def analyze_match(
         self,
@@ -87,7 +87,7 @@ class LangChainLLMAdapter(LLMPort):
 
     def extract_cv_profile(self, cv_content: str) -> ExtractedCVProfile:
         try:
-            response = self.cv_profile_chain.invoke(
+            response: dict[str, Any] = self.cv_profile_chain.invoke(
                 {
                     "cv_text": cv_content,
                 }

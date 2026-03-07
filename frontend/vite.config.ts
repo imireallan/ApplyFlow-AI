@@ -18,4 +18,7 @@ export default defineConfig({
     strictPort: true,
     allowedHosts: true,
   },
+  ssr: {
+    noExternal: ["posthog-js", "@posthog/react"],
+  },
 });

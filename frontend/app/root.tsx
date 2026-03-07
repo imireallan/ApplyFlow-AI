@@ -3,14 +3,69 @@ import {
   Links,
   Meta,
   Outlet,
+  redirect,
   Scripts,
   ScrollRestoration,
 } from "react-router";
 
+import { GoogleOAuthProvider } from "@react-oauth/google";
 import type { Route } from "./+types/root";
+import {
+  getAccessToken,
+  getUserFromRequest,
+  isTokenExpired,
+} from "./.server/sessions";
 import "./app.css";
 import { GlobalSpinner } from "./components/GlobalSpinner";
-import { GoogleOAuthProvider } from "@react-oauth/google";
+
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  // Get the pathname to check if it's a protected route
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  // List of protected routes that require authentication
+  const protectedRoutes = ["/app"];
+
+  // Check if the user is trying to access a protected route
+  const isProtectedRoute = protectedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + "/"),
+  );
+
+  let user = null;
+
+  if (isProtectedRoute) {
+    // Check if user has a valid token
+    const token = getAccessToken(request);
+
+    if (!token) {
+      // Redirect to login with return URL
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirectTo", pathname);
+      throw redirect(loginUrl.toString());
+    }
+
+    // Also check if the token is expired
+    if (isTokenExpired(token)) {
+      // Token expired - clear it and redirect to login
+      const loginUrl = new URL("/login", request.url);
+      loginUrl.searchParams.set("redirectTo", pathname);
+      throw redirect(loginUrl.toString(), {
+        headers: {
+          // Clear the expired cookie
+          "Set-Cookie": `access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;`,
+        },
+      });
+    }
+
+    // Fetch user data for protected routes (cached at root level)
+    const userResponse = await getUserFromRequest(request);
+    if (userResponse) {
+      user = userResponse.data;
+    }
+  }
+
+  return { user };
+};
 
 export const meta: Route.MetaFunction = () => [
   { title: "ApplyFlow" },
@@ -52,12 +107,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
-export default function App() {
+export default function App({ loaderData }: Route.ComponentProps) {
   return (
     <>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
         <GlobalSpinner />
-        <Outlet />
+        <Outlet context={{ user: loaderData.user }} />
       </GoogleOAuthProvider>
     </>
   );

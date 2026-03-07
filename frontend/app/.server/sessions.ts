@@ -5,6 +5,36 @@ import { apiRequestHandler } from "./apiRequestHandler";
 const COOKIE_NAME = "access_token";
 
 /**
+ * Decode a JWT token and return the payload
+ * Note: This is a basic decoder without signature verification
+ * For full security, the backend should verify the token
+ */
+export function decodeJwt(token: string): { exp: number } | null {
+  try {
+    // JWT format: header.payload.signature
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+
+    // Decode the payload (second part)
+    const payload = JSON.parse(atob(parts[1]));
+    return payload;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if a JWT token is expired
+ */
+export function isTokenExpired(token: string): boolean {
+  const payload = decodeJwt(token);
+  if (!payload || !payload.exp) return true;
+
+  // exp is in seconds, Date.now() is in milliseconds
+  return payload.exp * 1000 < Date.now();
+}
+
+/**
  * Get the raw JWT token from the request cookie
  */
 export function getAccessToken(request: Request): string | null {
@@ -20,6 +50,7 @@ export function getAccessToken(request: Request): string | null {
  * Create a session by setting the access_token cookie
  */
 export async function createTokenSession({
+  request,
   accessToken,
   redirectTo,
 }: {
@@ -27,9 +58,12 @@ export async function createTokenSession({
   accessToken: string;
   redirectTo: string;
 }) {
+  // Token expires in 60 minutes (matches backend ACCESS_TOKEN_EXPIRE_MINUTES)
+  const maxAge = 60 * 60; // 60 minutes in seconds
+
   return redirect(redirectTo, {
     headers: {
-      "Set-Cookie": `${COOKIE_NAME}=${accessToken}`,
+      "Set-Cookie": `${COOKIE_NAME}=${accessToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge};`,
     },
   });
 }
@@ -40,7 +74,8 @@ export async function createTokenSession({
 export async function destroyTokenSession(request: Request) {
   return redirect("/login", {
     headers: {
-      "Set-Cookie": `${COOKIE_NAME}=`,
+      // Clear cookie by setting expired time in the past and same attributes as when created
+      "Set-Cookie": `${COOKIE_NAME}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;`,
     },
   });
 }
@@ -63,6 +98,9 @@ export async function getUserFromRequest(request: Request) {
   const responseData = (response as any).data;
   const responseStatus = (response as any).status;
 
+  console.log("User response from /auth/me:", responseData);
+  console.log("User response status:", responseStatus);
+
   if (responseStatus === 401) {
     return null;
   }
@@ -71,13 +109,15 @@ export async function getUserFromRequest(request: Request) {
   const payload = responseData as User;
 
   const user: User = {
-    id: payload.id,
+    id: payload.id || "",
     email: payload.email,
     full_name: payload.full_name,
     first_name: payload.first_name,
     last_name: payload.last_name,
     picture_url: payload.picture_url,
   };
+
+  console.log("Parsed user object:", user);
   return data(user, { status: 200 });
 }
 
@@ -112,6 +152,7 @@ export async function requireUserToken(
   redirectTo: string = new URL(request.url).pathname,
 ) {
   const userToken = await getUserToken(request);
+  console.log("User token:", userToken);
   if (!userToken) {
     const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
     throw redirect(`/login?${searchParams}`);

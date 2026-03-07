@@ -10,43 +10,29 @@ import {
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { Form, Link, NavLink, data } from "react-router";
+import { Form, Link, NavLink, data, useOutletContext } from "react-router";
 import { logout } from "~/.server/auth";
-import { requireUser } from "~/.server/sessions";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 import { Svg } from "~/components/SvgLogo";
+import { UserAvatar } from "~/components/UserAvatar";
 import type { User } from "~/types/user";
 import type { Route } from "./+types/dashboard_layout";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const user: User = await requireUser(request);
-
-  return data({ user });
+  return data({ success: true });
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return logout(request);
 };
 
-export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
-  const { user } = loaderData;
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
+interface DashboardContext {
+  user: User | null;
+}
 
-  // Get initials from user name or email
-  const getInitials = () => {
-    if (user?.full_name) {
-      return user.full_name
-        .split(" ")
-        .map((n: string) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2);
-    }
-    if (user?.email) {
-      return user.email[0].toUpperCase();
-    }
-    return "U";
-  };
+export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
+  const { user } = useOutletContext<DashboardContext>();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   return (
     <div className="flex h-screen w-full bg-[#fcfcfd]">
@@ -66,12 +52,11 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
 
         {/* User Avatar at bottom of sidebar */}
         <div className="mt-auto pt-4">
-          <button
+          <UserAvatar
+            user={user}
+            size="sm"
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold shadow-md hover:shadow-lg hover:scale-105 transition-all"
-          >
-            {getInitials()}
-          </button>
+          />
         </div>
       </nav>
 
@@ -170,23 +155,18 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
             </div>
 
             {/* Profile Button */}
-            <button
+            <UserAvatar
+              user={user}
+              size="md"
+              showName
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center gap-2 p-1.5 pr-3 rounded-full hover:bg-gray-100 transition-colors"
-            >
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
-                {getInitials()}
-              </div>
-              <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                {user?.first_name?.split(" ")[0] || "User"}
-              </span>
-            </button>
+            />
           </div>
         </header>
 
         {/* Page Content - Scrollable */}
         <div className="flex-1 overflow-auto p-6">
-          <AnimatedOutlet />
+          <AnimatedOutlet context={{ user }} />
         </div>
       </main>
 

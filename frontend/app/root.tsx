@@ -1,3 +1,4 @@
+import { usePostHog } from "@posthog/react";
 import {
   isRouteErrorResponse,
   Links,
@@ -17,6 +18,13 @@ import {
 } from "./.server/sessions";
 import "./app.css";
 import { GlobalSpinner } from "./components/GlobalSpinner";
+
+import { posthogMiddleware } from './lib/posthog-middleware';
+
+export const middleware: Route.MiddlewareFunction[] = [
+  posthogMiddleware,
+  // other middlewares...
+];
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   // Get the pathname to check if it's a protected route
@@ -119,6 +127,8 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
+  const posthog = usePostHog();
+  posthog?.captureException(error);
   let message = "Oops!";
   let details = "An unexpected error occurred.";
   let stack: string | undefined;

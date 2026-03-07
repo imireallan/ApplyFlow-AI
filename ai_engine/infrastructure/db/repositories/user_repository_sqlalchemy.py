@@ -1,15 +1,13 @@
 from uuid import UUID
 
-from sqlalchemy.orm import Session
-
 from core.domain.models.user import User
 from core.domain.repositories.user_repository import UserRepository
 from infrastructure.db.models.user_model import UserORM
 
+from .base import BaseRepository
 
-class SQLAlchemyUserRepository(UserRepository):
-    def __init__(self, session: Session) -> None:
-        self.session = session
+
+class SQLAlchemyUserRepository(UserRepository, BaseRepository[UserORM]):
 
     def get_by_email(self, email: str) -> User | None:
         orm = self.session.query(UserORM).filter_by(email=email).first()
@@ -31,7 +29,8 @@ class SQLAlchemyUserRepository(UserRepository):
 
     def create(self, user: User) -> User:
         orm = self._to_orm(user)
-        self.session.add(orm)
+        self.add(orm)
+        self.commit()
         return self._to_domain(orm)
 
     def _to_orm(self, user: User) -> UserORM:
@@ -44,8 +43,6 @@ class SQLAlchemyUserRepository(UserRepository):
             last_name=user.last_name,
             picture_url=user.picture_url,
             is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
         )
 
     def _to_domain(self, orm: UserORM) -> User:

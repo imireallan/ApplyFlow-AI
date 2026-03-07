@@ -3,14 +3,14 @@ from uuid import uuid4, UUID
 from sqlalchemy import ForeignKey, String, Text, UUID as PGUUID
 from sqlalchemy.orm import MappedColumn, mapped_column, relationship
 
-from core.database import Base
+from .base import BaseORM
 
 
-class CVORM(Base):
+class CVORM(BaseORM):
     __tablename__ = "cvs"
 
-    id: MappedColumn[str] = mapped_column(
-        String, primary_key=True, default=lambda: str(uuid4())
+    id: MappedColumn[UUID] = mapped_column(
+        PGUUID, primary_key=True, default=lambda: uuid4()
     )
     user_id: MappedColumn[UUID] = mapped_column(
         PGUUID, ForeignKey("users.id"), nullable=False, index=True

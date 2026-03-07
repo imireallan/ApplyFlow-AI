@@ -7,12 +7,29 @@ class Settings(BaseSettings):
     # Environment
     ENV: str = "development"
 
-    # Database
-    POSTGRES_USER: str
-    POSTGRES_PASSWORD: str
-    POSTGRES_DB: str
-    POSTGRES_HOST: str
+    # Database - Support both local (POSTGRES_*) and external/Cloud (EXTERNAL_DB_URL)
+    # For AWS RDS or other external DB, set EXTERNAL_DB_URL directly
+    # For local development, use POSTGRES_* vars (defaults to localhost)
+    EXTERNAL_DB_URL: str | None = (
+        None  # Full connection URL (takes precedence over POSTGRES_*)
+    )
+    POSTGRES_USER: str = "postgres"
+    POSTGRES_PASSWORD: str = "password123"
+    POSTGRES_DB: str = "applyflow_db"
+    POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
+
+    PINECONE_INDEX_NAME: str = "applyflow-test"
+    PINECONE_API_KEY: str
+
+    # Embeddings - Use "openai" or "huggingface" (free)
+    # Note: If using HuggingFace, ensure your Pinecone index dimension matches:
+    # - all-mpnet-base-v2: 768 dimensions
+    # - sentence-transformers/all-MiniLM-L6-v2: 384 dimensions
+    # For Pinecone, you may need to create an index with the matching dimension
+    EMBEDDING_PROVIDER: str = "huggingface"
+    OPENAI_API_KEY: str | None = None
+    HUGGINGFACE_EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
 
     # JWT
     JWT_SECRET: str
@@ -34,6 +51,9 @@ class Settings(BaseSettings):
 
     @property
     def DATABASE_URL(self) -> str:
+        """Build database URL. Uses EXTERNAL_DB_URL if provided, otherwise builds from POSTGRES_* vars."""
+        if self.EXTERNAL_DB_URL:
+            return self.EXTERNAL_DB_URL
         return (
             f"postgresql+psycopg2://"
             f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"

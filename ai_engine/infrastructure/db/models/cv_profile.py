@@ -5,19 +5,19 @@ from sqlalchemy import UUID as PGUUID
 from sqlalchemy import ForeignKey, String, Text
 from sqlalchemy.orm import MappedColumn, mapped_column, relationship
 
-from core.database import Base
+from .base import BaseORM
 
 
-class CVProfileORM(Base):
+class CVProfileORM(BaseORM):
     __tablename__ = "cv_profiles"
 
     id: MappedColumn[UUID] = mapped_column(PGUUID, primary_key=True)
-    cv_id: MappedColumn[UUID] = mapped_column(ForeignKey("cvs.id"), nullable=False)
+    cv_id: MappedColumn[UUID] = mapped_column(PGUUID,ForeignKey("cvs.id"), nullable=False)
 
     cv = relationship("CVORM", back_populates="profiles")
 
     name: MappedColumn[str] = mapped_column(String)
     summary: MappedColumn[str] = mapped_column(Text)
-    skills: MappedColumn[str] = mapped_column(JSON)
-    experience: MappedColumn[str] = mapped_column(JSON)
-    education: MappedColumn[str] = mapped_column(JSON)
+    skills: MappedColumn[list[str]] = mapped_column(JSON)
+    experience: MappedColumn[list[str]] = mapped_column(JSON)
+    education: MappedColumn[list[str]] = mapped_column(JSON)

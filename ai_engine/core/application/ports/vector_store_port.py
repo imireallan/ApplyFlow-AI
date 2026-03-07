@@ -7,9 +7,19 @@ from core.application.models.match import MatchSimilarityScore
 class VectorStorePort(ABC):
 
     @abstractmethod
-    def query(self, query: str, k: int) -> list[MatchSimilarityScore]:
+    def query(
+        self,
+        query: str,
+        user_id: str,
+        k: int,
+    ) -> list[MatchSimilarityScore]:
         pass
 
     @abstractmethod
-    def upsert(self, file_path: str) -> dict[str, Any]:
+    def upsert(
+        self,
+        vector_id: str,
+        content: str,
+        user_id: str,
+    ) -> dict[str, Any]:
         pass

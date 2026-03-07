@@ -1,4 +1,4 @@
-from typing import Any
+
 
 from core.application.models.match import MatchAnalysisResult
 from core.application.ports.llm_port import LLMPort
@@ -14,8 +14,18 @@ class JobApplicationService:
         self.vector_store = vector_store
         self.llm = llm
 
-    def process_job_application(self, job_description: str, top_k: int) -> list[Any]:
-        matches = self.vector_store.query(job_description, k=top_k)
+    def process_job_application(
+        self,
+        job_description: str,
+        top_k: int,
+        user_id: str,
+    ) -> list[MatchAnalysisResult]:
+
+        matches = self.vector_store.query(
+            job_description,
+            k=top_k,
+            user_id=user_id,
+        )
 
         enriched: list[MatchAnalysisResult] = []
 
@@ -29,7 +39,7 @@ class JobApplicationService:
                 MatchAnalysisResult(
                     id=match.id,
                     content=match.content,
-                    match_score=match.match_score,
+                    match_score=analysis.match_score,
                     reasoning=analysis.reasoning,
                     nudge=analysis.nudge,
                 )

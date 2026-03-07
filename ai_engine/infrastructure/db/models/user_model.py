@@ -1,14 +1,13 @@
-from datetime import datetime
 from uuid import UUID, uuid4
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import Boolean, String
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import MappedColumn, mapped_column, relationship
 
-from core.database import Base
+from .base import BaseORM
 
 
-class UserORM(Base):
+class UserORM(BaseORM):
     __tablename__ = "users"
 
     id: MappedColumn[UUID] = mapped_column(
@@ -23,11 +22,5 @@ class UserORM(Base):
     last_name: MappedColumn[str | None] = mapped_column(String)
     picture_url: MappedColumn[str | None] = mapped_column(String)
     is_active: MappedColumn[bool] = mapped_column(Boolean, default=True)
-    created_at: MappedColumn[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
-    updated_at: MappedColumn[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now()
-    )
 
     cvs = relationship("CVORM", back_populates="user")

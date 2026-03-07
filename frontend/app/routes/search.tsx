@@ -10,14 +10,13 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Form, useNavigation } from "react-router";
+import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { Button } from "~/components/Button";
 import { MatchList } from "~/components/MatchList";
 import { PageWrapper } from "~/components/PageWrapper";
-import { cn, toPercentage } from "~/lib/utils";
+import { cn } from "~/lib/utils";
 import type { CVMatch } from "~/types/ai";
 import type { Route } from "./+types/search";
-
-const API_URL = `${import.meta.env.VITE_AI_API_URL}/job/process`;
 
 export async function loader() {
   // await delay(5000)
@@ -97,54 +96,46 @@ export async function action({ request }: Route.ActionArgs) {
     return { results: [] };
   }
 
-  try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ job_description: query, top_k: 5 }),
-    });
+  const result = await apiRequestHandler(request, {
+    endpoint: "/job/process",
+    method: "POST",
+    body: { job_description: query, top_k: 5 },
+  });
 
-    const data = await response.json();
+  // Check if apiRequestHandler returned an error response
+  if (result instanceof Response || (result as any)?.error) {
+    const errorData = result instanceof Response ? await result.json() : result;
 
-    if (!response.ok) {
-      // Generalizing the error based on status code
-      if (response.status === 429) {
-        return {
-          results: [],
-          error: {
-            title: "System Overloaded",
-            message:
-              "We're receiving too many requests right now. Please wait a moment and try again.",
-          },
-        };
-      }
-
+    // Handle rate limiting specifically
+    if (result instanceof Response && result.status === 429) {
       return {
         results: [],
         error: {
-          title: "Search Failed",
+          title: "System Overloaded",
           message:
-            "Something went wrong while analyzing the job description. Please try again.",
+            "We're receiving too many requests right now. Please wait a moment and try again.",
         },
       };
     }
 
-    return { results: data.data as CVMatch[] };
-  } catch (error) {
     return {
       results: [],
       error: {
-        title: "Connection Error",
+        title: "Search Failed",
         message:
-          "Could not reach the analysis server. Check your internet connection.",
+          errorData?.error ||
+          "Something went wrong while analyzing the job description. Please try again.",
       },
     };
   }
+
+  // Handle case where result.data might not exist
+  const responseData = result as any;
+  return { results: (responseData?.data || []) as CVMatch[] };
 }
 
 export default function CVSearch({ actionData }: Route.ComponentProps) {
-  console.log("Action Data:", actionData);
-  const results = actionData?.results ?? [];
+  const results = (actionData?.results as any)?.data ?? [];
   const error = actionData?.error;
 
   const navigation = useNavigation();
@@ -292,7 +283,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     </h3>
                     <div className="flex items-baseline gap-2">
                       <span className="text-6xl font-black text-blue-600 leading-none">
-                        {toPercentage(selectedMatch.match_score)}
+                        {selectedMatch.match_score}
                       </span>
                       <span className="text-gray-300 text-2xl font-bold">
                         / 10

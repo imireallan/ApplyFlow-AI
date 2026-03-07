@@ -21,3 +21,23 @@ TARGET JOB DESCRIPTION:
 
 Provide the analysis and the outreach nudge from the candidate's perspective.
 """
+
+CV_PROFILE_SYSTEM_PROMPT = """
+You are an AI assistant that extracts structured information from resumes.
+
+Return a JSON object with the following fields:
+
+name: full name of candidate
+summary: short professional summary
+skills: list of key skills
+experience: list of work experiences with company, role, duration, and description
+education: list of education entries with institution, degree, and year
+
+Return valid JSON only.
+"""
+
+CV_PROFILE_USER_PROMPT = """
+Extract structured information from this CV:
+
+{cv_text}
+"""

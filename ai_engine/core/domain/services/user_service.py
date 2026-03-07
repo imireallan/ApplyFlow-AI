@@ -1,16 +1,12 @@
-from datetime import datetime, timezone
 from uuid import uuid4
-
-from sqlalchemy.orm import Session
 
 from ..models.user import User
 from ..repositories.user_repository import UserRepository
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository, session: Session) -> None:
+    def __init__(self, user_repo: UserRepository) -> None:
         self.user_repo = user_repo
-        self.session = session
 
     def get_or_create_google_user(
         self,
@@ -36,11 +32,6 @@ class UserService:
             last_name=last_name,
             picture_url=picture_url,
             is_active=True,
-            created_at=datetime.now(timezone.utc),
-            updated_at=datetime.now(timezone.utc),
         )
 
-        created_user = self.user_repo.create(new_user)
-        self.session.commit()
-
-        return created_user
+        return self.user_repo.create(new_user)

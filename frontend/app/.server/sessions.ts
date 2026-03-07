@@ -1,7 +1,7 @@
 import { data, redirect } from "react-router";
 import type { User } from "~/types/user";
+import { apiRequestHandler } from "./apiRequestHandler";
 
-const API_URL = import.meta.env.VITE_AI_API_URL;
 const COOKIE_NAME = "access_token";
 
 /**
@@ -47,20 +47,28 @@ export async function destroyTokenSession(request: Request) {
 
 /**
  * Get user from request by calling the backend API
+ * Uses apiRequestHandler for consistency with other API calls
  */
 export async function getUserFromRequest(request: Request) {
-  const cookieHeader = request.headers.get("Cookie");
-
-  const res = await fetch(`${API_URL}/auth/me`, {
-    headers: { cookie: cookieHeader ?? "" },
-    credentials: "include",
+  // Use apiRequestHandler which extracts token from cookie and adds Authorization header
+  // Also forward cookies to ensure they're sent with the request
+  const response = await apiRequestHandler(request, {
+    endpoint: "/auth/me",
+    method: "GET",
+    forwardCookies: true, // Ensure cookies are forwarded
   });
 
-  if (res.status === 401) {
+  // apiRequestHandler returns a react-router data object
+  // Access .data to get the actual response and .status for HTTP status
+  const responseData = (response as any).data;
+  const responseStatus = (response as any).status;
+
+  if (responseStatus === 401) {
     return null;
   }
 
-  const payload = await res.json();
+  // Extract user from response data
+  const payload = responseData as User;
 
   const user: User = {
     id: payload.id,

@@ -1,4 +1,4 @@
-from functools import lru_cache
+from functools import lru_cache, cached_property
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     EXTERNAL_DB_URL: str | None = (
         None  # Full connection URL (takes precedence over POSTGRES_*)
     )
+    DB_SSL_MODE: str | None = None
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "password123"
     POSTGRES_DB: str = "applyflow_db"
@@ -49,16 +50,22 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
-    @property
+
+    @cached_property
     def DATABASE_URL(self) -> str:
-        """Build database URL. Uses EXTERNAL_DB_URL if provided, otherwise builds from POSTGRES_* vars."""
         if self.EXTERNAL_DB_URL:
-            return self.EXTERNAL_DB_URL
-        return (
-            f"postgresql+psycopg2://"
-            f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-        )
+            url = self.EXTERNAL_DB_URL
+        else:
+            url = (
+                f"postgresql+psycopg2://"
+                f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+            )
+
+        if self.DB_SSL_MODE:
+            url = f"{url}?sslmode={self.DB_SSL_MODE}"
+
+        return url
 
 
 @lru_cache

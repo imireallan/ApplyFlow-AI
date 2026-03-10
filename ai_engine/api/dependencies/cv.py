@@ -66,11 +66,9 @@ def get_cv_index_service(
 def get_job_application_service(
     vector_store: VectorStorePort = Depends(get_vector_store),
     llm: LLMPort = Depends(get_llm),
+    profile_repository: CVProfileRepository = Depends(get_cv_profile_repository),
 ) -> JobApplicationService:
-    return JobApplicationService(
-        vector_store,
-        llm,
-    )
+    return JobApplicationService(vector_store, llm, profile_repository)
 
 
 def get_cv_profile_service(

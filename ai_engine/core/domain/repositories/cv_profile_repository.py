@@ -3,6 +3,7 @@ from uuid import UUID
 
 from ..models.cv_profile import CVProfile
 
+
 class CVProfileRepository(ABC):
     @abstractmethod
     def get_by_id(self, profile_id: UUID) -> CVProfile | None:
@@ -10,4 +11,12 @@ class CVProfileRepository(ABC):
 
     @abstractmethod
     def create(self, profile: CVProfile) -> CVProfile:
+        pass
+
+    @abstractmethod
+    def get_by_user_id(self, user_id: str) -> CVProfile | None:
+        pass
+
+    @abstractmethod
+    def update(self, profile: CVProfile) -> CVProfile:
         pass

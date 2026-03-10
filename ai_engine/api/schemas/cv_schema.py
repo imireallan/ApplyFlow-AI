@@ -15,3 +15,4 @@ class CVIndexResponse(PydanticBaseModel):
     message: str
     filename: str | None
     chunks_created: int | None
+    cv_id: str

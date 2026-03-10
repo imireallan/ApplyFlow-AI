@@ -12,8 +12,17 @@ class CVProfileORM(BaseORM):
     __tablename__ = "cv_profiles"
 
     id: MappedColumn[UUID] = mapped_column(PGUUID, primary_key=True)
-    cv_id: MappedColumn[UUID] = mapped_column(PGUUID,ForeignKey("cvs.id"), nullable=False)
+    user_id: MappedColumn[UUID] = mapped_column(
+        PGUUID, ForeignKey("users.id"), nullable=False
+    )
 
+    user = relationship("UserORM", back_populates="profiles")
+
+    cv_id: MappedColumn[UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("cvs.id"), nullable=True
+    )
+
+    # Relationship to CV (optional - cv_id is nullable)
     cv = relationship("CVORM", back_populates="profiles")
 
     name: MappedColumn[str] = mapped_column(String)

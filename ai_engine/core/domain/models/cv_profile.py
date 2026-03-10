@@ -7,12 +7,13 @@ from .base import BaseModel
 
 @dataclass
 class CVProfile(BaseModel):
-    cv_id: UUID
+    user_id: UUID
     name: str
     summary: str
     skills: list[str]
     experience: list[Any]
     education: list[Any]
+    cv_id: UUID | None = None
 
 @dataclass
 class ExtractedCVProfile:

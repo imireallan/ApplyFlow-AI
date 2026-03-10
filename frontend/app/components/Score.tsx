@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { toPercentage } from "~/lib/utils";
 
 export function Score({ score }: { score: number }) {
-  const normalizedScore = score > 1 ? score / 10 : score;
+  const normalizedScore = score >= 1 ? score / 10 : score;
   const percentage = toPercentage(normalizedScore);
 
   const radius = 18;

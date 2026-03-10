@@ -29,6 +29,7 @@ async def index_cv(
             message="CV indexed successfully",
             filename=file.filename,
             chunks_created=result.get("chunks"),
+            cv_id=str(result.get("cv_id")),
         )
     except VectorStoreError as e:
         raise VectorStoreError(detail=e.detail, log_message=e.log_message) from e
@@ -50,10 +51,34 @@ async def index_cv(
 @router.post("/{cv_id}/profile")
 async def generate_profile(
     cv_id: str,
+    current_user: CurrentUser,
     service: CVProfileService = Depends(get_cv_profile_service),
 ) -> dict[str, Any]:
 
-    profile = service.generate_profile(cv_id)
+    profile = service.generate_profile(
+        cv_id=cv_id,
+        user_id=str(current_user.id),
+    )
+
+    return {
+        "status": "success",
+        "data": profile,
+    }
+
+
+@router.get("/profile")
+async def get_profile(
+    current_user: CurrentUser,
+    service: CVProfileService = Depends(get_cv_profile_service),
+) -> dict[str, Any]:
+
+    profile = service.get_profile_by_user_id(str(current_user.id))
+
+    if not profile:
+        return {
+            "status": "success",
+            "data": None,
+        }
 
     return {
         "status": "success",

@@ -13,9 +13,21 @@ class SQLAlchemyCVProfileRepository(CVProfileRepository, BaseRepository[CVProfil
             return None
         return self._to_domain(orm)
 
+    def get_by_user_id(self, user_id: str) -> CVProfile | None:
+        orm = self.session.query(CVProfileORM).filter_by(user_id=user_id).first()
+        if orm is None:
+            return None
+        return self._to_domain(orm)
+
     def create(self, profile: CVProfile) -> CVProfile:
         orm = self._to_orm(profile)
         self.add(orm)
+        self.commit()
+        return self._to_domain(orm)
+
+    def update(self, profile: CVProfile) -> CVProfile:
+        orm = self._to_orm(profile)
+        self.session.merge(orm)
         self.commit()
         return self._to_domain(orm)
 
@@ -23,6 +35,7 @@ class SQLAlchemyCVProfileRepository(CVProfileRepository, BaseRepository[CVProfil
         return CVProfileORM(
             id=profile.id,
             cv_id=profile.cv_id,
+            user_id=profile.user_id,
             name=profile.name,
             summary=profile.summary,
             skills=profile.skills,
@@ -34,6 +47,7 @@ class SQLAlchemyCVProfileRepository(CVProfileRepository, BaseRepository[CVProfil
         return CVProfile(
             id=orm.id,
             cv_id=orm.cv_id,
+            user_id=orm.user_id,
             name=orm.name,
             summary=orm.summary,
             skills=orm.skills,

@@ -24,3 +24,4 @@ class UserORM(BaseORM):
     is_active: MappedColumn[bool] = mapped_column(Boolean, default=True)
 
     cvs = relationship("CVORM", back_populates="user")
+    profiles = relationship("CVProfileORM", back_populates="user")

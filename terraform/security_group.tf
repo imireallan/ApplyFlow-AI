@@ -27,7 +27,7 @@ resource "aws_security_group" "applyflow_sg" {
     from_port = 22
     to_port   = 22
     protocol  = "tcp"
-    cidr_blocks = ["41.90.179.217/32"]
+    cidr_blocks = ["41.90.188.85/32"]
   }
 
   egress {

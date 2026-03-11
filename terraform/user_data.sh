@@ -5,7 +5,7 @@ set -e
 dnf update -y
 
 # Install required tools
-dnf install -y docker git curl
+dnf install -y docker git
 
 # Start Docker
 systemctl enable docker

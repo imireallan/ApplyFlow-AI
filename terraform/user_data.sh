@@ -11,7 +11,7 @@ usermod -aG docker ec2-user
 
 cd /home/ec2-user
 
-git clone --branch terraform ${repo_url} applyflow
+git clone ${repo_url} applyflow
 
 cd applyflow
 

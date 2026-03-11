@@ -212,3 +212,6 @@ frontend/.env.production
 nudger/.env.production
 force-deploy.sh
 service-link.json
+applyflow-ec2-key.pem
+.DS_Store
+terraform/.terraform/

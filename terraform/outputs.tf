@@ -1,3 +1,3 @@
-output "server_ip" {
-  value = aws_instance.applyflow.public_ip
+output "static_ip" {
+  value = aws_eip.applyflow_ip.public_ip
 }

@@ -21,6 +21,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           source: "."
           target: "/home/ec2-user/applyflow"
+          rm: true
 
       - name: Create env file
         uses: appleboy/ssh-action@v1.0.0
@@ -29,6 +30,7 @@ jobs:
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
+            mkdir -p /home/ec2-user/applyflow
             echo "${{ secrets.ENV_FILE }}" > /home/ec2-user/applyflow/.env
 
       - name: Deploy containers
@@ -39,5 +41,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/applyflow
+            docker compose pull || true
             docker compose down
             docker compose up -d --build
+            docker system prune -f

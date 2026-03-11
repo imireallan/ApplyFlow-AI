@@ -13,8 +13,8 @@ services:
     build:
       context: ./ai_engine
       target: production
-    # ports:
-    #   - "8000:8000"
+    ports:
+      - "8000:8000"
     env_file: .env
 
   db:

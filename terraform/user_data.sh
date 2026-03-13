@@ -2,7 +2,7 @@
 set -e
 
 dnf update -y
-dnf install -y docker git
+dnf install -y docker git make
 
 systemctl enable docker
 systemctl start docker

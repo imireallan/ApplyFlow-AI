@@ -43,11 +43,13 @@ jobs:
             cd /home/ec2-user/applyflow
             docker compose pull || true
             docker compose down
-            docker compose up -d --build
+            docker compose up -d --build db
+            docker system prune -f
+            docker compose up -d --build db
             docker system prune -f
 
-            # Wait for DB to be ready
-            sleep 10
+            echo "Waiting for DB..."
+            sleep 8
 
-            # Run migrations
             docker compose run --rm ai_engine alembic upgrade head
+            docker compose up -d --build

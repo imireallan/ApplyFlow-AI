@@ -22,6 +22,12 @@ export function UserAvatar({
     setImageError(false);
   }, [user?.picture_url]);
 
+  const [imgSrc, setImgSrc] = useState(user?.picture_url);
+
+  useEffect(() => {
+    setImgSrc(user?.picture_url);
+  }, [user?.picture_url]);
+
   const sizeClasses = {
     sm: "w-8 h-8 text-xs",
     md: "w-10 h-10 text-sm",
@@ -45,7 +51,7 @@ export function UserAvatar({
     return "U";
   };
 
-  const showImage = user?.picture_url && !imageError;
+  const showImage = !!user?.picture_url && !imageError;
 
   const avatar = (
     <div
@@ -60,10 +66,15 @@ export function UserAvatar({
     >
       {showImage ? (
         <img
-          src={user.picture_url}
+          loading="lazy"
+          src={imgSrc}
           alt={user.full_name || user.email || "User"}
           className="w-full h-full object-cover"
-          onError={() => setImageError(true)}
+          onError={(e) => {
+            console.log("Image failed:", user.picture_url);
+            setImageError(true);
+            setImgSrc(undefined);
+          }}
         />
       ) : (
         getInitials()

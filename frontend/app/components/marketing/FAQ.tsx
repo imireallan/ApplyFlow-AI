@@ -1,7 +1,7 @@
+import { ChevronDown, FileText, HelpCircle, Shield, Zap } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
-import { motion, AnimatePresence } from "motion/react";
-import { ChevronDown, Shield, FileText, Zap, HelpCircle } from "lucide-react";
-import { containerVariants, itemVariants } from "~/lib/variants";
+import { containerVariants, itemVariants } from "~/helpers/variants";
 
 const faqs = [
   {

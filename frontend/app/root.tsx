@@ -19,7 +19,7 @@ import {
 import "./app.css";
 import { GlobalSpinner } from "./components/GlobalSpinner";
 
-import { posthogMiddleware } from './lib/posthog-middleware';
+import { posthogMiddleware } from "./helpers/posthog-middleware";
 
 export const middleware: Route.MiddlewareFunction[] = [
   posthogMiddleware,
@@ -116,8 +116,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  console.log('google id')
-  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID)
+  console.log("google id");
+  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   return (
     <>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>

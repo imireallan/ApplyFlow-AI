@@ -11,7 +11,7 @@ import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
 import { SearchForm } from "~/components/SearchForm";
-import { cn } from "~/lib/utils";
+import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
 import type { Route } from "./+types/search";
 

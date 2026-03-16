@@ -1,7 +1,7 @@
+import { MessageSquare, Search, TrendingUp, Upload } from "lucide-react";
 import { motion } from "motion/react";
-import { Upload, Search, TrendingUp, MessageSquare } from "lucide-react";
-import { cn } from "~/lib/utils";
-import { containerVariants, itemVariants } from "~/lib/variants";
+import { cn } from "~/helpers/utils";
+import { containerVariants, itemVariants } from "~/helpers/variants";
 
 const steps = [
   {

@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { toPercentage } from "~/lib/utils";
+import { toPercentage } from "~/helpers/utils";
 
 export function Score({ score }: { score: number }) {
   const normalizedScore = score >= 1 ? score / 10 : score;

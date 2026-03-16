@@ -1,6 +1,6 @@
+import { CheckCircle, EyeOff, Lock, Shield } from "lucide-react";
 import { motion } from "motion/react";
-import { Shield, Lock, EyeOff, CheckCircle } from "lucide-react";
-import { containerVariants, itemVariants } from "~/lib/variants";
+import { containerVariants, itemVariants } from "~/helpers/variants";
 
 const trustBadges = [
   {

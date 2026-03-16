@@ -1,15 +1,14 @@
 name: Deploy ApplyFlow
 
 on:
-push:
-branches:
-- main
+  push:
+  branches:
+    - main
 
 jobs:
-deploy:
-runs-on: ubuntu-latest
+  deploy:
+  runs-on: ubuntu-latest
 
-```
 steps:
   - name: Checkout repo
     uses: actions/checkout@v3
@@ -68,4 +67,3 @@ steps:
         docker compose run --rm ai_engine alembic upgrade head
 
         docker compose up -d
-```

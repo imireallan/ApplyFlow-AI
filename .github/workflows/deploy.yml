@@ -2,68 +2,68 @@ name: Deploy ApplyFlow
 
 on:
   push:
-  branches:
-    - main
+    branches:
+      - main
 
 jobs:
   deploy:
-  runs-on: ubuntu-latest
+    runs-on: ubuntu-latest
 
-steps:
-  - name: Checkout repo
-    uses: actions/checkout@v3
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
 
-  # Configure AWS credentials
-  - name: Configure AWS credentials
-    uses: aws-actions/configure-aws-credentials@v4
-    with:
-      aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      aws-region: ${{ secrets.AWS_REGION }}
+      # Configure AWS credentials
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
-  # Login to ECR
-  - name: Login to Amazon ECR
-    uses: aws-actions/amazon-ecr-login@v2
+      # Login to ECR
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
 
-  # Build and push backend image
-  - name: Build and push ai_engine image
-    run: |
-      docker build -t ai_engine ./ai_engine
-      docker tag ai_engine:latest ${{ secrets.ECR_AI_ENGINE_URI }}:latest
-      docker push ${{ secrets.ECR_AI_ENGINE_URI }}:latest
+      # Build and push backend image
+      - name: Build and push ai_engine image
+        run: |
+          docker build -t ai_engine ./ai_engine
+          docker tag ai_engine:latest ${{ secrets.ECR_AI_ENGINE_URI }}:latest
+          docker push ${{ secrets.ECR_AI_ENGINE_URI }}:latest
 
-  # Build and push frontend image
-  - name: Build and push frontend image
-    run: |
-      docker build -t frontend ./frontend
-      docker tag frontend:latest ${{ secrets.ECR_FRONTEND_URI }}:latest
-      docker push ${{ secrets.ECR_FRONTEND_URI }}:latest
+      # Build and push frontend image
+      - name: Build and push frontend image
+        run: |
+          docker build -t frontend ./frontend
+          docker tag frontend:latest ${{ secrets.ECR_FRONTEND_URI }}:latest
+          docker push ${{ secrets.ECR_FRONTEND_URI }}:latest
 
-  # Deploy on EC2
-  - name: Deploy containers on EC2
-    uses: appleboy/ssh-action@v1.0.0
-    with:
-      host: ${{ secrets.EC2_HOST }}
-      username: ec2-user
-      key: ${{ secrets.EC2_SSH_KEY }}
-      command_timeout: 60m
-      script: |
-        cd /home/ec2-user/applyflow
+      # Deploy on EC2
+      - name: Deploy containers on EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          command_timeout: 60m
+          script: |
+            cd /home/ec2-user/applyflow
 
-        echo "${{ secrets.ENV_FILE }}" > .env
+            echo "${{ secrets.ENV_FILE }}" > .env
 
-        aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
-          | docker login --username AWS --password-stdin $(echo ${{ secrets.ECR_AI_ENGINE_URI }} | cut -d'/' -f1)
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+              | docker login --username AWS --password-stdin $(echo ${{ secrets.ECR_AI_ENGINE_URI }} | cut -d'/' -f1)
 
-        docker compose pull
+            docker compose pull
 
-        docker compose down
+            docker compose down
 
-        docker compose up -d db
+            docker compose up -d db
 
-        echo "Waiting for DB..."
-        sleep 10
+            echo "Waiting for DB..."
+            sleep 10
 
-        docker compose run --rm ai_engine alembic upgrade head
+            docker compose run --rm ai_engine alembic upgrade head
 
-        docker compose up -d
+            docker compose up -d

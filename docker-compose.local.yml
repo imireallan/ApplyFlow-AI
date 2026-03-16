@@ -35,12 +35,12 @@ services:
       start_period: 40s
     #depends_on:
     #  - db  # Remove hard dependency - uses EXTERNAL_DB_URL or POSTGRES_HOST from env
-  nudger:
-    build: ./nudger
-    volumes:
-      - ./nudger:/app
-    env_file: .env
-    command: npm run dev
+  # nudger:
+  #   build: ./nudger
+  #   volumes:
+  #     - ./nudger:/app
+  #   env_file: .env
+  #   command: npm run dev
     #depends_on:
     #  - db  # Remove hard dependency - uses POSTGRES_HOST from env
   db:

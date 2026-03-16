@@ -1,6 +1,6 @@
+import { BrainCircuit, Search, Zap } from "lucide-react";
 import { motion, type Variants } from "motion/react";
-import { Search, BrainCircuit, Zap } from "lucide-react";
-import { cn } from "~/lib/utils";
+import { cn } from "~/helpers/utils";
 
 /* ----------------------------- */
 /* Same Pattern As Stats */

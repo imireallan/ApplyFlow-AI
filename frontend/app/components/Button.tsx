@@ -1,9 +1,7 @@
-import type { ReactNode } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { AnimatePresence, motion, type HTMLMotionProps } from "motion/react";
-import { cn } from "~/lib/utils";
-
-
+import type { ReactNode } from "react";
+import { cn } from "~/helpers/utils";
 
 const buttonVariants = cva(
   "w-full flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:pointer-events-none overflow-hidden relative",
@@ -56,11 +54,11 @@ export function Button({
     <motion.button
       whileHover={{ scale: 1.02, y: -2 }}
       whileTap={{ scale: 0.98, y: 0 }}
-      transition={{ 
-        type: "spring", 
-        stiffness, 
+      transition={{
+        type: "spring",
+        stiffness,
         damping,
-        ...props.transition
+        ...props.transition,
       }}
       className={cn(buttonVariants({ variant, size, className }))}
       disabled={isLoading || props.disabled}
@@ -68,18 +66,12 @@ export function Button({
     >
       <AnimatePresence mode="wait">
         {isLoading ? (
-          <span
-            key="loader"
-            className="flex items-center gap-2"
-          >
+          <span key="loader" className="flex items-center gap-2">
             <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
             {loadingText || "Loading..."}
           </span>
         ) : (
-          <span
-            key="content"
-            className="flex items-center gap-2"
-          >
+          <span key="content" className="flex items-center gap-2">
             {icon && <span className="text-lg">{icon}</span>}
             {children}
           </span>

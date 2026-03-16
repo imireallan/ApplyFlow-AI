@@ -1,6 +1,6 @@
-import { Target, Zap, Users, BrainCircuit } from "lucide-react";
+import { BrainCircuit, Target, Users, Zap } from "lucide-react";
 import { motion } from "motion/react";
-import { containerVariants, itemVariants } from "~/lib/variants";
+import { containerVariants, itemVariants } from "~/helpers/variants";
 
 const stats = [
   {

@@ -10,25 +10,12 @@ services:
       - ai_engine
 
   frontend:
-    build:
-      context: ./frontend
-      target: production
-    expose:
-      - "3000"
+    image: 739275457094.dkr.ecr.us-east-1.amazonaws.com/applyflow-frontend
     env_file: .env
 
   ai_engine:
-    build:
-      context: ./ai_engine
-      target: production
-    expose:
-      - "8000"
+    image: 739275457094.dkr.ecr.us-east-1.amazonaws.com/applyflow-ai-engine
     env_file: .env
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 20s
-      timeout: 10s
-      retries: 5
 
   db:
     image: postgres:15-alpine

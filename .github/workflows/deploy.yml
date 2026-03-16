@@ -41,15 +41,18 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd /home/ec2-user/applyflow
-            docker compose pull || true
+
             docker compose down
-            docker compose up -d --build db
-            docker system prune -f
-            docker compose up -d --build db
-            docker system prune -f
+
+            docker compose build --no-cache
+
+            docker compose up -d db
 
             echo "Waiting for DB..."
             sleep 8
 
-            docker compose run --rm ai_engine alembic upgrade head
-            docker compose up -d --build
+            docker compose up -d ai_engine
+
+            docker compose exec ai_engine alembic upgrade head
+
+            docker compose up -d

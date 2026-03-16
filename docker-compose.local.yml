@@ -46,7 +46,7 @@ services:
   db:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: applyflow_db
+      POSTGRES_DB: applyflow_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password123
     ports:

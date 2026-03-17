@@ -55,22 +55,37 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 60m
           script: |
-            cd /home/ec2-user/applyflow
+            set -e
+            APP_DIR=/home/ec2-user/applyflow
 
+            # Check if directory exists and is a git repo; if not, clone it
+            if [ ! -d "$APP_DIR/.git" ]; then
+              echo "Repository not found. Cloning..."
+              git clone ${{ secrets.REPO_URL }} $APP_DIR
+            fi
+
+            cd $APP_DIR
+
+            # Ensure we have the latest docker-compose.yml and local files
+            git pull origin main
+
+            # Update environment variables
             echo "${{ secrets.ENV_FILE }}" > .env
 
+            # Authenticate Docker with ECR
             aws ecr get-login-password --region us-east-1 \
-                | docker login --username AWS --password-stdin ${{ secrets.EC2_ROLE }}
+                | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
+            # Refresh images and restart services
             docker compose pull
-
             docker compose down
 
+            # Start DB first and run migrations
             docker compose up -d db
-
             echo "Waiting for DB..."
             sleep 10
 
             docker compose run --rm ai_engine alembic upgrade head
 
+            # Bring everything else up
             docker compose up -d

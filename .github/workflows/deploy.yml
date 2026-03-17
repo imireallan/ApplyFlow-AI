@@ -24,18 +24,25 @@ jobs:
       # Login to ECR
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Verify imports
+        run: |
+          if git grep "~/lib"; then
+            echo "Old imports detected"
+            exit 1
+          fi
 
       # Build and push backend image
       - name: Build and push ai_engine image
         run: |
-          docker build --no-cache -t ai_engine ./ai_engine
+          docker build -t ai_engine ./ai_engine
           docker tag ai_engine:latest ${{ secrets.ECR_AI_ENGINE_URI }}:latest
           docker push ${{ secrets.ECR_AI_ENGINE_URI }}:latest
 
       # Build and push frontend image
       - name: Build and push frontend image
         run: |
-          docker build --no-cache -t frontend ./frontend
+          docker build -t frontend ./frontend
           docker tag frontend:latest ${{ secrets.ECR_FRONTEND_URI }}:latest
           docker push ${{ secrets.ECR_FRONTEND_URI }}:latest
 

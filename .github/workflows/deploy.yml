@@ -52,9 +52,6 @@ jobs:
 
             echo "${{ secrets.ENV_FILE }}" > .env
 
-            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
-              | docker login --username AWS --password-stdin $(echo ${{ secrets.ECR_AI_ENGINE_URI }} | cut -d'/' -f1)
-
             docker compose pull
 
             docker compose down

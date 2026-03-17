@@ -27,7 +27,7 @@ jobs:
       
       - name: Verify imports
         run: |
-          if git grep "~/lib"; then
+          if git grep "~/lib" -- ':!.github'; then
             echo "Old imports detected"
             exit 1
           fi

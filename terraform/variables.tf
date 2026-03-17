@@ -3,13 +3,13 @@ variable "aws_region" {
 }
 
 variable "instance_type" {
-  default = "t3.micro"
+  default = "t3.medium"
 }
 
 variable "key_name" {
-  description = "EC2 key pair"
+  default = "applyflow-ec2-key"
 }
 
 variable "repo_url" {
-  description="https://github.com/imireallan/ApplyFlow-AI.git"
+  default="https://github.com/imireallan/ApplyFlow-AI.git"
 }

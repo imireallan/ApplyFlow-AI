@@ -16,6 +16,11 @@ resource "aws_instance" "applyflow" {
 
   key_name = var.key_name
 
+  root_block_device {
+    volume_size = 30
+    volume_type = "gp3"
+  }
+
   vpc_security_group_ids = [
     aws_security_group.applyflow_sg.id
   ]

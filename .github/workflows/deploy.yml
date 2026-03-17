@@ -56,6 +56,14 @@ jobs:
           command_timeout: 60m
           script: |
             set -e
+
+            # Ensure the .ssh directory exists
+            mkdir -p ~/.ssh
+            chmod 700 ~/.ssh
+
+            # Add GitHub to known_hosts to prevent "Host key verification failed"
+            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+            
             APP_DIR=/home/ec2-user/applyflow
 
             # Check if directory exists and is a git repo; if not, clone it

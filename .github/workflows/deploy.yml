@@ -59,6 +59,9 @@ jobs:
 
             echo "${{ secrets.ENV_FILE }}" > .env
 
+            aws ecr get-login-password --region us-east-1 \
+                | docker login --username AWS --password-stdin ${{ secrets.EC2_ROLE }}
+
             docker compose pull
 
             docker compose down

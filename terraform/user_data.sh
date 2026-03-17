@@ -7,6 +7,12 @@ dnf install -y docker git make
 systemctl enable docker
 systemctl start docker
 
+fallocate -l 2G /swapfile
+chmod 600 /swapfile
+mkswap /swapfile
+swapon /swapfile
+echo '/swapfile none swap sw 0 0' >> /etc/fstab
+
 usermod -aG docker ec2-user
 
 mkdir -p /usr/libexec/docker/cli-plugins

@@ -42,7 +42,12 @@ jobs:
       # Build and push frontend image
       - name: Build and push frontend image
         run: |
-          docker build -t frontend ./frontend
+          docker build -t frontend \
+            --build-arg VITE_AI_API_URL=${{ secrets.VITE_AI_API_URL }} \
+            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} \
+            --build-arg VITE_PUBLIC_POSTHOG_TOKEN=${{ secrets.VITE_PUBLIC_POSTHOG_TOKEN }} \
+            --build-arg VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }} \
+            ./frontend
           docker tag frontend:latest ${{ secrets.ECR_FRONTEND_URI }}:latest
           docker push ${{ secrets.ECR_FRONTEND_URI }}:latest
 

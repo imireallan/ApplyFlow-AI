@@ -19,6 +19,10 @@ class SQLAlchemyCVRepository(CVRepository, BaseRepository[CVORM]):
         self.commit()
         return self._to_domain(orm)
 
+    def list_by_user(self, user_id: UUID) -> list[CV]:
+        orms = self.session.query(CVORM).filter_by(user_id=user_id).all()
+        return [self._to_domain(orm) for orm in orms]
+
     def _to_orm(self, cv: CV) -> CVORM:
         return CVORM(
             id=cv.id,

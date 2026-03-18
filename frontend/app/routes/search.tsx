@@ -15,6 +15,16 @@ import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
 import type { Route } from "./+types/search";
 
+// Session storage key for caching search results
+const SEARCH_CACHE_KEY = "applyflow_search_cache";
+
+interface CachedSearchResult {
+  query: string;
+  results: any[];
+  profile: any;
+  timestamp: number;
+}
+
 export async function loader() {
   return { initialMatches: [] as CVMatch[] };
 }
@@ -22,6 +32,28 @@ export async function loader() {
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const query = formData.get("job_description")?.toString()?.trim() ?? "";
+
+  // Check if this is a cached submission
+  const isCached = formData.get("_cached") === "true";
+
+  if (isCached) {
+    try {
+      const cachedResults = JSON.parse(
+        (formData.get("_cached_results") as string) || "[]",
+      );
+      const cachedProfile = JSON.parse(
+        (formData.get("_cached_profile") as string) || "null",
+      );
+      return {
+        results: cachedResults,
+        profile: cachedProfile,
+        query,
+        fromCache: true,
+      };
+    } catch {
+      // Fall through to normal processing
+    }
+  }
 
   if (!query) {
     return { results: [], profile: null, query: "" };
@@ -114,19 +146,92 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
   const isSearching = navigation.state === "submitting";
   const submit = useSubmit();
 
+  // Client-side detection
+  const [isClient, setIsClient] = useState(false);
+
+  // Track the last submitted query to detect new searches
+  const [lastSubmittedQuery, setLastSubmittedQuery] = useState<string>("");
+
+  // Initialize isClient on mount
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Get query from actionData
   const currentQuery = actionData?.query ?? "";
 
-  // Get results from actionData
-  const results = actionData?.results ?? [];
+  // Detect when a new search is submitted (query changed)
+  const isNewSearch = currentQuery && currentQuery !== lastSubmittedQuery;
+
+  // State for results and profile - initialized from cache
+  const [cachedResults, setCachedResults] = useState<any[]>([]);
+  const [cachedProfile, setCachedProfile] = useState<any>(null);
+
+  // Get results from actionData - results is already an array
+  const results = actionData?.results ?? cachedResults;
   const error = actionData?.error;
 
-  // Get profile from location state or actionData
-  const profile = (location.state as any)?.profile ?? actionData?.profile;
+  // Get profile from location state or actionData or cached
+  const profile =
+    (location.state as any)?.profile ?? actionData?.profile ?? cachedProfile;
 
-  const hasSearched = !!actionData;
+  const hasSearched = !!actionData || cachedResults.length > 0;
+
+  // Initialize from sessionStorage on mount (only once, on client)
+  useEffect(() => {
+    if (isClient) {
+      try {
+        const cached = sessionStorage.getItem(SEARCH_CACHE_KEY);
+        if (cached) {
+          const parsed: CachedSearchResult = JSON.parse(cached);
+          if (parsed.results && parsed.results.length > 0) {
+            setCachedResults(parsed.results);
+            setCachedProfile(parsed.profile);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load from cache:", e);
+      }
+    }
+  }, [isClient]);
+
+  // Save to sessionStorage after successful action
+  useEffect(() => {
+    if (isClient && currentQuery && results && results.length > 0) {
+      setCachedResults(results);
+      setCachedProfile(actionData?.profile ?? null);
+
+      try {
+        sessionStorage.setItem(
+          SEARCH_CACHE_KEY,
+          JSON.stringify({
+            query: currentQuery,
+            results: results,
+            profile: actionData?.profile ?? null,
+            timestamp: Date.now(),
+          }),
+        );
+      } catch (e) {
+        console.error("Failed to save to cache:", e);
+      }
+    }
+  }, [isClient, actionData, currentQuery, results]);
 
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
+
+  // Clear selected match when a new search is submitted (while searching)
+  useEffect(() => {
+    if (isNewSearch && isSearching) {
+      setSelectedMatch(null);
+    }
+  }, [isNewSearch, isSearching]);
+
+  // Update last submitted query when results arrive
+  useEffect(() => {
+    if (actionData && !isSearching && currentQuery) {
+      setLastSubmittedQuery(currentQuery);
+    }
+  }, [actionData, isSearching, currentQuery]);
 
   // Auto-select first match on new results
   useEffect(() => {
@@ -137,8 +242,50 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
     }
   }, [results]);
 
+  // Handle form submission with cache check
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const query = formData.get("job_description")?.toString()?.trim() ?? "";
+
+    if (!query) return;
+
+    // Check sessionStorage for cached results (only on client)
+    if (isClient) {
+      try {
+        const cached = sessionStorage.getItem(SEARCH_CACHE_KEY);
+        if (cached) {
+          const parsed: CachedSearchResult = JSON.parse(cached);
+          const cachedQuery = (parsed.query ?? "").trim().toLowerCase();
+          const searchQuery = query.trim().toLowerCase();
+
+          if (
+            cachedQuery === searchQuery &&
+            parsed.results &&
+            parsed.results.length > 0
+          ) {
+            // Use cached results
+            const cachedFormData = new FormData();
+            cachedFormData.set("job_description", query);
+            cachedFormData.set("_cached", "true");
+            cachedFormData.set(
+              "_cached_results",
+              JSON.stringify(parsed.results),
+            );
+            cachedFormData.set(
+              "_cached_profile",
+              JSON.stringify(parsed.profile),
+            );
+            submit(cachedFormData, { method: "post" });
+            return;
+          }
+        }
+      } catch (e) {
+        console.error("Cache check error:", e);
+      }
+    }
+
+    // No cache hit - submit normally
     submit(event.currentTarget);
   };
 

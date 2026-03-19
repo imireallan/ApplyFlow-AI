@@ -7,6 +7,7 @@ import {
   useSearchParams,
   useSubmit,
 } from "react-router";
+// Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
 import { MatchList } from "~/components/MatchList";
@@ -18,21 +19,40 @@ import { ProfileHighlights } from "~/components/ProfileHighlights";
 import { SearchForm } from "~/components/SearchForm";
 import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
-import type { Route } from "./+types/search";
+
+interface ActionArgs {
+  request: Request;
+}
+
+interface ActionData {
+  results?: CVMatch[];
+  profile?: any;
+  query?: string;
+  error?: {
+    title: string;
+    message: string;
+  };
+  fromCache?: boolean;
+  cvId?: string;
+}
+
+interface ComponentProps {
+  actionData?: ActionData;
+}
 
 interface CachedSearchResult {
   query: string;
   cvId: string;
-  results: any[];
+  results: CVMatch[];
   profile: any;
   timestamp: number;
 }
 
-export async function loader() {
-  return { initialMatches: [] as CVMatch[] };
+export async function loader(): Promise<{ initialMatches: CVMatch[] }> {
+  return { initialMatches: [] };
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request }: ActionArgs): Promise<ActionData> {
   const formData = await request.formData();
   const url = new URL(request.url);
 
@@ -41,15 +61,10 @@ export async function action({ request }: Route.ActionArgs) {
   const query = formData.get("job_description")?.toString().trim() ?? "";
   const isCached = formData.get("_cached") === "true";
 
-  console.log({ cvId, isCached });
-
   // 1. Cache Hijack Verification
   if (isCached) {
     try {
       const cachedCvId = formData.get("_cached_cv_id")?.toString();
-
-      console.log("Cached cv");
-      console.log({ cachedCvId });
 
       if (cachedCvId === cvId && cvId !== "") {
         const results = JSON.parse(formData.get("_cached_results") as string);
@@ -101,7 +116,7 @@ export async function action({ request }: Route.ActionArgs) {
   };
 }
 
-export default function CVSearch({ actionData }: Route.ComponentProps) {
+export default function CVSearch({ actionData }: ComponentProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
   const location = useLocation();
@@ -144,7 +159,8 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
   useEffect(() => {
     if (
       isClient &&
-      actionData?.results?.length > 0 &&
+      actionData?.results &&
+      actionData.results.length > 0 &&
       selectedCvId &&
       !actionData.error
     ) {
@@ -153,7 +169,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
         sessionStorage.setItem(
           key,
           JSON.stringify({
-            query: actionData.query,
+            query: actionData!.query,
             cvId: selectedCvId,
             results: actionData.results,
             profile: actionData.profile,
@@ -165,7 +181,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
   }, [actionData, selectedCvId, isClient, getCacheKey]);
 
   const results = actionData?.results ?? cachedResults;
-  const profile =
+  const profile: any =
     (location.state as any)?.profile ?? actionData?.profile ?? cachedProfile;
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
@@ -197,7 +213,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
           formData.set("_cached", "true");
           formData.set("_cached_cv_id", parsed.cvId);
           formData.set("_cached_results", JSON.stringify(parsed.results));
-          formData.set("_cached_profile", JSON.stringify(parsed.profile));
+          formData.set("_cached_profile", JSON.stringify(parsed.profile!));
         }
       }
     }

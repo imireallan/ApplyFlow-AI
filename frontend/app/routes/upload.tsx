@@ -1,14 +1,24 @@
 import { redirect } from "react-router";
+// Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { PageWrapper } from "~/components/PageWrapper";
 import { UploadForm } from "~/components/UploadForm";
-import type { Route } from "./+types/upload";
+
+interface ActionArgs {
+  request: Request;
+}
+
+interface ComponentProps {
+  actionData?: {
+    error?: string;
+  };
+}
 
 export async function loader() {
   return null;
 }
 
-export async function action({ request }: Route.ActionArgs) {
+export async function action({ request }: ActionArgs) {
   const url = new URL(request.url);
 
   const redirectTo = url.searchParams.get("redirectTo")?.trim();
@@ -23,13 +33,13 @@ export async function action({ request }: Route.ActionArgs) {
   apiData.append("file", file);
 
   // Step 1: Upload CV and index
-  const indexResult = await apiRequestHandler(request, {
+  const indexResult = (await apiRequestHandler(request, {
     endpoint: "/cv/index-cv",
     method: "POST",
     body: apiData,
-  });
+  })) as any;
 
-  if (indexResult instanceof Response || indexResult.data?.error) {
+  if (indexResult instanceof Response || (indexResult as any).data?.error) {
     const error =
       indexResult instanceof Response
         ? await indexResult.json()
@@ -43,12 +53,12 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   // Step 2: Generate profile from CV
-  const profileResult = await apiRequestHandler(request, {
+  const profileResult = (await apiRequestHandler(request, {
     endpoint: `/cv/${cvId}/profile`,
     method: "POST",
-  });
+  })) as any;
 
-  if (profileResult instanceof Response || profileResult.data?.error) {
+  if (profileResult instanceof Response || (profileResult as any).data?.error) {
     const error =
       indexResult instanceof Response
         ? await indexResult.json()
@@ -59,7 +69,7 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect(redirectTo || `/app/search?cv_id=${cvId}`);
 }
 
-export default function UploadPage({ actionData }: Route.ComponentProps) {
+export default function UploadPage({ actionData }: ComponentProps) {
   return (
     <PageWrapper>
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfcfd] p-6">

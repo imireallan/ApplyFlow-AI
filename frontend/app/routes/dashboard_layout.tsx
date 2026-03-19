@@ -25,15 +25,26 @@ import { Svg } from "~/components/SvgLogo";
 import { UserAvatar } from "~/components/UserAvatar";
 import type { UserCV } from "~/types/cv";
 import type { User } from "~/types/user";
-import type { Route } from "./+types/dashboard_layout";
+interface LoaderArgs {
+  request: Request;
+}
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+interface LoaderData {
+  success: boolean;
+  cvs: UserCV[];
+}
+
+interface ComponentProps {
+  loaderData: LoaderData;
+}
+
+export const loader = async ({ request }: LoaderArgs): Promise<LoaderData> => {
   const result = await apiRequestHandler(request, {
     endpoint: "/cv/user-cvs",
     method: "GET",
-  });
+  }) as any;
 
-  const cvs = result?.data?.data || [];
+  const cvs = (result as any)?.data?.data || [] as UserCV[];
 
   const url = new URL(request.url);
   const pathname = url.pathname;
@@ -54,7 +65,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   };
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
+export const action = async ({ request }: LoaderArgs) => {
   return logout(request);
 };
 
@@ -63,7 +74,7 @@ export interface DashboardContext {
   cvs: UserCV[];
 }
 
-export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
+export default function DashboardLayout({ loaderData }: ComponentProps) {
   const { user } = useOutletContext<DashboardContext>();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -81,7 +92,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
 
   const selectedCvId = urlCvId;
 
-  const updateSelectedCV = (cvId: string | null) => {
+const updateSelectedCV = (cvId: string | null): void => {
     const next = new URLSearchParams(searchParams);
 
     if (cvId) next.set("cv_id", cvId);
@@ -264,7 +275,14 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
   );
 }
 
-function FeatureNavItem({ icon, label, active, isComingSoon }: any) {
+interface FeatureNavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  isComingSoon?: boolean;
+}
+
+function FeatureNavItem({ icon, label, active, isComingSoon }: FeatureNavItemProps) {
   return (
     <div
       className={`flex items-center justify-between p-3 rounded-xl transition-all ${active ? "bg-gray-50 text-blue-600" : "text-gray-500 opacity-60"}`}

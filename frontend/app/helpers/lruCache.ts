@@ -1,9 +1,10 @@
 const MAX_CACHE_ENTRIES = 3;
 
-export const saveToCache = (key: string, data: any) => {
+export const saveToCache = (key: string, data: any, cvId: string) => {
   const cache = JSON.parse(sessionStorage.getItem("search_cache") || "{}");
 
   cache[key] = {
+    cvId,
     data,
     timestamp: Date.now(),
   };
@@ -22,5 +23,6 @@ export const saveToCache = (key: string, data: any) => {
 
 export const loadFromCache = (key: string) => {
   const cache = JSON.parse(sessionStorage.getItem("search_cache") || "{}");
-  return cache[key]?.data || null;
+  if (cache && cache[key]) return JSON.parse(cache[key].data);
+  return null;
 };

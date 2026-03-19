@@ -42,9 +42,9 @@ interface ComponentProps {
 }
 
 interface CachedSearchResult {
-  query: string;
+  // query: string;
   cvId: string;
-  results: CVMatch[];
+  // results: CVMatch[];
   profile: any;
   timestamp: number;
 }
@@ -68,9 +68,8 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
       const cachedCvId = formData.get("_cached_cv_id")?.toString();
 
       if (cachedCvId === cvId && cvId !== "") {
-        const results = JSON.parse(formData.get("_cached_results") as string);
         const profile = JSON.parse(formData.get("_cached_profile") as string);
-        return { results, profile, query, fromCache: true, cvId };
+        return { profile, query, fromCache: true, cvId };
       }
       console.log("Cached cv but different");
     } catch (e) {
@@ -120,14 +119,12 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
 export default function CVSearch({ actionData }: ComponentProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
-  const location = useLocation();
   const isSearching = navigation.state === "submitting";
 
   const [searchParams] = useSearchParams();
   const selectedCvId = searchParams.get("cv_id") as string;
 
   const [isClient, setIsClient] = useState(false);
-  const [cachedResults, setCachedResults] = useState<any[]>([]);
   const [cachedProfile, setCachedProfile] = useState<any>(null);
 
   useEffect(() => {
@@ -135,8 +132,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
   }, []);
 
   const getCacheKey = useCallback(
-    (cvId?: string, query?: string) =>
-      cvId && query ? `cv_${cvId}_q_${query}` : null,
+    (cvId?: string) => (cvId ? `cv_${cvId}` : null),
     [],
   );
   const currentCacheKey = getCacheKey(selectedCvId);
@@ -145,14 +141,15 @@ export default function CVSearch({ actionData }: ComponentProps) {
   useEffect(() => {
     if (isClient && currentCacheKey) {
       const cached = loadFromCache(currentCacheKey);
+      console.log({ currentCacheKey, cached });
 
       if (cached) {
-        setCachedResults(cached.results || []);
+        setCachedProfile(cached);
       } else {
-        setCachedResults([]);
+        setCachedProfile(null);
       }
     }
-  }, [selectedCvId, currentCacheKey, isClient]);
+  }, [selectedCvId, isClient]);
 
   // 2. Persist new results to the correct CV slot
   useEffect(() => {
@@ -165,19 +162,20 @@ export default function CVSearch({ actionData }: ComponentProps) {
     ) {
       const key = getCacheKey(selectedCvId);
       if (key) {
-        saveToCache(`cv_profile_${selectedCvId}`, JSON.stringify(profile));
+        saveToCache(key, JSON.stringify(actionData?.profile), selectedCvId);
       }
     }
   }, [actionData, selectedCvId, isClient, getCacheKey]);
 
-  const results = actionData?.results ?? cachedResults;
-  const profile: any =
-    (location.state as any)?.profile ?? actionData?.profile ?? cachedProfile;
+  const results = actionData?.results;
+  console.log({ cachedProfile });
+  const profile: any = actionData?.profile || cachedProfile;
+  console.log({ profile });
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
   // Auto-select first result
   useEffect(() => {
-    if (results?.length > 0) setSelectedMatch(results[0]);
+    if (results && results?.length > 0) setSelectedMatch(results[0]);
     else setSelectedMatch(null);
   }, [results]);
 
@@ -189,20 +187,16 @@ export default function CVSearch({ actionData }: ComponentProps) {
 
     if (!query || !selectedCvId) return;
 
-    // FORCE the context ID into the formData so the action sees it correctly
-    // formData.set("cv_id", selectedCvId);
-
-    if (isClient && currentCacheKey) {
-      const saved = sessionStorage.getItem(currentCacheKey);
+    if (isClient && selectedCvId && query) {
+      const cacheKey = getCacheKey(selectedCvId) as string;
+      const saved = loadFromCache(cacheKey);
       if (saved) {
-        const parsed: CachedSearchResult = JSON.parse(saved);
+        const parsed: CachedSearchResult = saved;
         if (
-          parsed.query.toLowerCase() === query.toLowerCase() &&
           parsed.cvId === selectedCvId
         ) {
           formData.set("_cached", "true");
           formData.set("_cached_cv_id", parsed.cvId);
-          formData.set("_cached_results", JSON.stringify(parsed.results));
           formData.set("_cached_profile", JSON.stringify(parsed.profile!));
         }
       }
@@ -241,7 +235,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
                     />
                   ))}
                 </div>
-              ) : results.length > 0 ? (
+              ) : results && results.length > 0 ? (
                 <MatchList
                   results={results}
                   setSelectedMatch={setSelectedMatch}

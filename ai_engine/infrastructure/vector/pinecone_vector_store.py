@@ -15,6 +15,7 @@ from core.config.settings import settings
 class PineconeVectorStoreAdapter(VectorStorePort):
 
     def __init__(self) -> None:
+        print("🔥 Initializing vector store ONCE")
         # Initialize embeddings based on provider
         if settings.EMBEDDING_PROVIDER == "huggingface":
             self.embeddings: Embeddings = HuggingFaceEmbeddings(
@@ -26,7 +27,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
         try:
             pc = Pinecone(api_key=settings.PINECONE_API_KEY)
 
-            dimension = len(self.embeddings.embed_query("test"))
+            dimension = 384
 
             index_name = settings.PINECONE_INDEX_NAME
 

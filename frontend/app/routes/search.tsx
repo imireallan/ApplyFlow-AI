@@ -17,6 +17,7 @@ import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
 import { SearchForm } from "~/components/SearchForm";
+import { loadFromCache, saveToCache } from "~/helpers/lruCache";
 import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
 
@@ -133,9 +134,9 @@ export default function CVSearch({ actionData }: ComponentProps) {
     setIsClient(true);
   }, []);
 
-  // Compute unique key for this CV
   const getCacheKey = useCallback(
-    (id?: string) => (id ? `cv_search_cache_${id}` : null),
+    (cvId?: string, query?: string) =>
+      cvId && query ? `cv_${cvId}_q_${query}` : null,
     [],
   );
   const currentCacheKey = getCacheKey(selectedCvId);
@@ -143,14 +144,12 @@ export default function CVSearch({ actionData }: ComponentProps) {
   // 1. Load CV-specific data whenever selectedCvId changes
   useEffect(() => {
     if (isClient && currentCacheKey) {
-      const saved = sessionStorage.getItem(currentCacheKey);
-      if (saved) {
-        const parsed: CachedSearchResult = JSON.parse(saved);
-        setCachedResults(parsed.results || []);
-        setCachedProfile(parsed.profile || null);
+      const cached = loadFromCache(currentCacheKey);
+
+      if (cached) {
+        setCachedResults(cached.results || []);
       } else {
         setCachedResults([]);
-        setCachedProfile(null);
       }
     }
   }, [selectedCvId, currentCacheKey, isClient]);
@@ -166,16 +165,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
     ) {
       const key = getCacheKey(selectedCvId);
       if (key) {
-        sessionStorage.setItem(
-          key,
-          JSON.stringify({
-            query: actionData!.query,
-            cvId: selectedCvId,
-            results: actionData.results,
-            profile: actionData.profile,
-            timestamp: Date.now(),
-          }),
-        );
+        saveToCache(`cv_profile_${selectedCvId}`, JSON.stringify(profile));
       }
     }
   }, [actionData, selectedCvId, isClient, getCacheKey]);

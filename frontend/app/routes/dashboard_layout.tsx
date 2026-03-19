@@ -9,12 +9,11 @@ import {
   Target,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Form,
   Link,
   NavLink,
-  data,
   redirect,
   useOutletContext,
   useSearchParams,
@@ -29,39 +28,30 @@ import type { User } from "~/types/user";
 import type { Route } from "./+types/dashboard_layout";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  try {
-    const result = await apiRequestHandler(request, {
-      endpoint: "/cv/user-cvs",
-      method: "GET",
-    });
+  const result = await apiRequestHandler(request, {
+    endpoint: "/cv/user-cvs",
+    method: "GET",
+  });
 
-    // Check for API errors (401, 500, etc.)
-    if (
-      (result as any).error ||
-      (result as any).status === 401 ||
-      (result as any).status >= 500
-    ) {
-      const loginUrl = new URL(request.url);
-      loginUrl.pathname = "/login";
-      loginUrl.searchParams.set("redirectTo", new URL(request.url).pathname);
-      throw redirect(loginUrl.toString());
-    }
+  const cvs = result?.data?.data || [];
 
-    const resultData = result as any;
-    const cvs = resultData.data?.data || [];
-    return data({
-      success: true,
-      cvs,
-    });
-  } catch (error: any) {
-    if (error.status === 401) {
-      const loginUrl = new URL(request.url);
-      loginUrl.pathname = "/login";
-      loginUrl.searchParams.set("redirectTo", new URL(request.url).pathname);
-      throw redirect(loginUrl.toString());
-    }
-    throw error;
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  const requiresCvRoutes = ["/app/search"];
+
+  const requiresCv = requiresCvRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
+  if (cvs.length === 0 && requiresCv) {
+    throw redirect(`/app?redirectTo=${encodeURIComponent(pathname)}`);
   }
+
+  return {
+    success: true,
+    cvs,
+  };
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -71,23 +61,33 @@ export const action = async ({ request }: Route.ActionArgs) => {
 export interface DashboardContext {
   user: User | null;
   cvs: UserCV[];
-  selectedCvId?: string;
 }
 
 export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
   const { user } = useOutletContext<DashboardContext>();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
-  const selectedCvId = searchParams.get("cv_id") || loaderData?.cvs?.[0]?.id;
+
+  const urlCvId = searchParams.get("cv_id");
   const cvs = loaderData?.cvs || [];
 
-  const updateSelectedCV = (cvId: string | null) => {
-    if (cvId) {
-      searchParams.set("cv_id", cvId);
-    } else {
-      searchParams.delete("cv_id");
+  useEffect(() => {
+    if (!urlCvId && cvs.length > 0) {
+      const next = new URLSearchParams(searchParams);
+      next.set("cv_id", cvs[0].id);
+      setSearchParams(next, { replace: true });
     }
-    setSearchParams(searchParams);
+  }, [urlCvId, cvs, searchParams, setSearchParams]);
+
+  const selectedCvId = urlCvId;
+
+  const updateSelectedCV = (cvId: string | null) => {
+    const next = new URLSearchParams(searchParams);
+
+    if (cvId) next.set("cv_id", cvId);
+    else next.delete("cv_id");
+
+    setSearchParams(next);
   };
 
   const selectedCV = cvs.find((cv: UserCV) => cv.id === selectedCvId);
@@ -249,7 +249,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
 
         {/* Page Content - Scrollable */}
         <div className="flex-1 overflow-auto p-6">
-          <AnimatedOutlet context={{ user, cvs, selectedCvId }} />
+          <AnimatedOutlet context={{ user, cvs }} />
         </div>
       </main>
 

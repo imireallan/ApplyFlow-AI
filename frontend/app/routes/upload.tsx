@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { redirect } from "react-router";
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { PageWrapper } from "~/components/PageWrapper";
 import { UploadForm } from "~/components/UploadForm";
@@ -9,6 +9,9 @@ export async function loader() {
 }
 
 export async function action({ request }: Route.ActionArgs) {
+  const url = new URL(request.url);
+
+  const redirectTo = url.searchParams.get("redirectTo")?.trim();
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -47,31 +50,16 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (profileResult instanceof Response || profileResult.data?.error) {
     const error =
-      profileResult instanceof Response
-        ? await profileResult.json()
+      indexResult instanceof Response
+        ? await indexResult.json()
         : profileResult.data.error;
     return { error };
   }
 
-  return {
-    success: true,
-    profile: profileResult.data?.data,
-  };
+  return redirect(redirectTo || `/app/search?cv_id=${cvId}`);
 }
 
 export default function UploadPage({ actionData }: Route.ComponentProps) {
-  const navigate = useNavigate();
-
-  // Handle successful upload - navigate to search page with profile
-  if (actionData?.success && actionData?.profile) {
-    // Use setTimeout to allow the actionData to render first
-    setTimeout(() => {
-      navigate("/app/search", {
-        state: { profile: actionData.profile },
-      });
-    }, 100);
-  }
-
   return (
     <PageWrapper>
       <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
@@ -84,17 +72,6 @@ export default function UploadPage({ actionData }: Route.ComponentProps) {
           </p>
         </div>
         <UploadForm error={actionData?.error} />
-        {actionData?.profile && (
-          <div className="mt-8 w-full max-w-xl p-6 bg-white rounded-3xl border border-gray-100 shadow-sm">
-            <h3 className="text-sm font-black text-gray-500 uppercase mb-2">
-              Profile Summary
-            </h3>
-            <p className="text-gray-700 mb-2">{actionData.profile.summary}</p>
-            <p className="text-gray-700">
-              <strong>Skills:</strong> {actionData.profile.skills.join(", ")}
-            </p>
-          </div>
-        )}
       </div>
     </PageWrapper>
   );

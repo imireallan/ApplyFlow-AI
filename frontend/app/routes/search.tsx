@@ -1,12 +1,7 @@
 import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
-import {
-  useLocation,
-  useNavigation,
-  useSearchParams,
-  useSubmit,
-} from "react-router";
+import { useNavigation, useSearchParams, useSubmit } from "react-router";
 // Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
@@ -60,24 +55,7 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
   const cvId = url.searchParams.get("cv_id")?.trim();
 
   const query = formData.get("job_description")?.toString().trim() ?? "";
-  const isCached = formData.get("_cached") === "true";
 
-  // 1. Cache Hijack Verification
-  if (isCached) {
-    try {
-      const cachedCvId = formData.get("_cached_cv_id")?.toString();
-
-      if (cachedCvId === cvId && cvId !== "") {
-        const profile = JSON.parse(formData.get("_cached_profile") as string);
-        return { profile, query, fromCache: true, cvId };
-      }
-      console.log("Cached cv but different");
-    } catch (e) {
-      console.error("Cache recovery failed", e);
-    }
-  }
-
-  // 2. Standard API Path
   if (!cvId) {
     return {
       error: {
@@ -139,9 +117,8 @@ export default function CVSearch({ actionData }: ComponentProps) {
 
   // 1. Load CV-specific data whenever selectedCvId changes
   useEffect(() => {
-    if (isClient && currentCacheKey) {
+    if (currentCacheKey) {
       const cached = loadFromCache(currentCacheKey);
-      console.log({ currentCacheKey, cached });
 
       if (cached) {
         setCachedProfile(cached);
@@ -149,7 +126,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
         setCachedProfile(null);
       }
     }
-  }, [selectedCvId, isClient]);
+  }, [selectedCvId]);
 
   // 2. Persist new results to the correct CV slot
   useEffect(() => {
@@ -168,9 +145,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
   }, [actionData, selectedCvId, isClient, getCacheKey]);
 
   const results = actionData?.results;
-  console.log({ cachedProfile });
   const profile: any = actionData?.profile || cachedProfile;
-  console.log({ profile });
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
   // Auto-select first result
@@ -186,21 +161,6 @@ export default function CVSearch({ actionData }: ComponentProps) {
     const query = formData.get("job_description")?.toString()?.trim() ?? "";
 
     if (!query || !selectedCvId) return;
-
-    if (isClient && selectedCvId && query) {
-      const cacheKey = getCacheKey(selectedCvId) as string;
-      const saved = loadFromCache(cacheKey);
-      if (saved) {
-        const parsed: CachedSearchResult = saved;
-        if (
-          parsed.cvId === selectedCvId
-        ) {
-          formData.set("_cached", "true");
-          formData.set("_cached_cv_id", parsed.cvId);
-          formData.set("_cached_profile", JSON.stringify(parsed.profile!));
-        }
-      }
-    }
 
     submit(formData, { method: "post", action: `?cv_id=${selectedCvId}` });
   };
@@ -250,32 +210,42 @@ export default function CVSearch({ actionData }: ComponentProps) {
           </div>
         </div>
 
-        <main className="flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative">
-          <AnimatePresence mode="wait">
-            {selectedMatch && !isSearching ? (
-              <motion.div
-                key={selectedMatch.id}
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                className="h-full overflow-y-auto p-8 space-y-8"
-              >
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                  {profile && <ProfileHighlights profile={profile} />}
-                  <MatchScore score={selectedMatch.match_score} />
-                  <MatchReasoning reasoning={selectedMatch.reasoning} />
-                </div>
-                <NudgeCard nudge={selectedMatch.nudge} />
-                <CVContextBlock content={selectedMatch.content} />
-              </motion.div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center text-gray-400">
-                <Sparkles size={48} className="mb-4 animate-pulse" />
-                <p className="text-sm font-bold uppercase tracking-widest">
-                  Select a result to analyze fit
-                </p>
+        <main
+          className="flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative"
+          suppressHydrationWarning
+        >
+          <div className="h-full overflow-y-auto p-8 space-y-8">
+            {profile && (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+                <ProfileHighlights profile={profile} />
               </div>
             )}
-          </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {selectedMatch && !isSearching ? (
+                <motion.div
+                  key={selectedMatch.id}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <MatchScore score={selectedMatch.match_score} />
+                    <MatchReasoning reasoning={selectedMatch.reasoning} />
+                  </div>
+                  <NudgeCard nudge={selectedMatch.nudge} />
+                  <CVContextBlock content={selectedMatch.content} />
+                </motion.div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-400 flex-1">
+                  <Sparkles size={48} className="mb-4 animate-pulse" />
+                  <p className="text-sm font-bold uppercase tracking-widest">
+                    {profile
+                      ? "No search results yet for this profile"
+                      : "Select a result to analyze fit"}
+                  </p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </PageWrapper>

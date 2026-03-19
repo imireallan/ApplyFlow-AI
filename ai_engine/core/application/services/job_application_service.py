@@ -1,7 +1,11 @@
-from core.domain.models.cv_profile import CVProfile
+from typing import Optional
+from uuid import UUID
+
 from core.application.models.match import MatchAnalysisResult
 from core.application.ports.llm_port import LLMPort
 from core.application.ports.vector_store_port import VectorStorePort
+from core.domain.models.cv_profile import CVProfile
+from core.domain.repositories.cv_embedding_repository import CVEmbeddingRepository
 from core.domain.repositories.cv_profile_repository import CVProfileRepository
 
 
@@ -11,10 +15,12 @@ class JobApplicationService:
         vector_store: VectorStorePort,
         llm: LLMPort,
         profile_repository: CVProfileRepository,
+        cv_embedding_repo: CVEmbeddingRepository,
     ):
         self.vector_store = vector_store
         self.llm = llm
         self.profile_repository = profile_repository
+        self.cv_embedding_repo = cv_embedding_repo
 
     def _build_profile_context(self, profile: CVProfile) -> str:
         """Convert profile into structured LLM context."""
@@ -24,13 +30,17 @@ class JobApplicationService:
 
         skills = ", ".join(profile.skills) if profile.skills else "None"
 
-        experience = "\n".join(
-            f"- {exp}" for exp in profile.experience
-        ) if profile.experience else "None"
+        experience = (
+            "\n".join(f"- {exp}" for exp in profile.experience)
+            if profile.experience
+            else "None"
+        )
 
-        education = "\n".join(
-            f"- {edu}" for edu in profile.education
-        ) if profile.education else "None"
+        education = (
+            "\n".join(f"- {edu}" for edu in profile.education)
+            if profile.education
+            else "None"
+        )
 
         return f"""
                 CANDIDATE PROFILE CONTEXT
@@ -55,6 +65,7 @@ class JobApplicationService:
         job_description: str,
         top_k: int,
         user_id: str,
+        cv_id: Optional[str] = None,
     ) -> list[MatchAnalysisResult]:
 
         # Fetch user's CV profile (optional, enriches analysis)
@@ -66,7 +77,15 @@ class JobApplicationService:
             user_id=user_id,
         )
 
-        
+        # Filter by specific CV if provided
+        if cv_id:
+            try:
+                cv_embeddings = self.cv_embedding_repo.list_by_cv(UUID(cv_id))
+                cv_vector_ids = {e.vector_id for e in cv_embeddings}
+                matches = [m for m in matches if m.id in cv_vector_ids]
+            except ValueError:
+                # Invalid UUID
+                matches = []
 
         enriched: list[MatchAnalysisResult] = []
 

@@ -98,9 +98,6 @@ export async function getUserFromRequest(request: Request) {
   const responseData = (response as any).data;
   const responseStatus = (response as any).status;
 
-  console.log("User response from /auth/me:", responseData);
-  console.log("User response status:", responseStatus);
-
   if (responseStatus === 401) {
     return null;
   }
@@ -117,7 +114,6 @@ export async function getUserFromRequest(request: Request) {
     picture_url: payload.picture_url,
   };
 
-  console.log("Parsed user object:", user);
   return data(user, { status: 200 });
 }
 
@@ -152,7 +148,6 @@ export async function requireUserToken(
   redirectTo: string = new URL(request.url).pathname,
 ) {
   const userToken = await getUserToken(request);
-  console.log("User token:", userToken);
   if (!userToken) {
     const searchParams = new URLSearchParams([["redirectTo", redirectTo]]);
     throw redirect(`/login?${searchParams}`);

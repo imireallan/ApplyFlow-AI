@@ -2,15 +2,40 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, File, UploadFile
 
-from api.dependencies.cv import get_cv_index_service, get_cv_profile_service
+from api.dependencies.cv import (
+    get_cv_index_service,
+    get_cv_profile_service,
+    get_cv_query_service,
+)
 from api.exception_handlers import InvalidFileTypeError, VectorStoreError
+from api.schemas.cv_list_schema import CVListItem, CVListResponse
 from api.schemas.cv_schema import CVIndexResponse
 from core.application.services.cv_index_service import CVIndexService
 from core.application.services.cv_profile_service import CVProfileService
+from core.application.services.cv_query_service import CVQueryService
 from core.security.dependencies import CurrentUser
 from infrastructure.filestorage.local_file_storage import cleanup_file, save_temp_file
 
 router = APIRouter()
+
+
+@router.get("/user-cvs", response_model=CVListResponse)
+async def list_user_cvs(
+    current_user: CurrentUser,
+    service: CVQueryService = Depends(get_cv_query_service),
+) -> CVListResponse:
+    cv_data = service.list_user_cvs(user_id=str(current_user.id))
+    cv_list_items = [
+        CVListItem(
+            id=str(cv.id),
+            file_name=cv.file_name or "",
+            user_id=str(cv.user_id),
+            created_at=cv.created_at,
+            content=cv.content,
+        )
+        for cv in cv_data
+    ]
+    return CVListResponse(data=cv_list_items)
 
 
 @router.post("/index-cv", response_model=CVIndexResponse)  # noqa: misc

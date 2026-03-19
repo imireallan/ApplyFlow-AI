@@ -1,7 +1,8 @@
-import { ArrowLeft, Search as SearchIcon, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
-import { useLocation, useNavigation, useSubmit } from "react-router";
+import { useCallback, useEffect, useState } from "react";
+import { useNavigation, useSearchParams, useSubmit } from "react-router";
+// Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
 import { MatchList } from "~/components/MatchList";
@@ -11,159 +12,179 @@ import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
 import { SearchForm } from "~/components/SearchForm";
+import { loadFromCache, saveToCache } from "~/helpers/lruCache";
 import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
-import type { Route } from "./+types/search";
 
-export async function loader() {
-  return { initialMatches: [] as CVMatch[] };
+interface ActionArgs {
+  request: Request;
 }
 
-export async function action({ request }: Route.ActionArgs) {
-  const formData = await request.formData();
-  const query = formData.get("job_description")?.toString()?.trim() ?? "";
+interface ActionData {
+  results?: CVMatch[];
+  profile?: any;
+  query?: string;
+  error?: {
+    title: string;
+    message: string;
+  };
+  fromCache?: boolean;
+  cvId?: string;
+}
 
-  if (!query) {
-    return { results: [], profile: null, query: "" };
+interface ComponentProps {
+  actionData?: ActionData;
+}
+
+interface CachedSearchResult {
+  // query: string;
+  cvId: string;
+  // results: CVMatch[];
+  profile: any;
+  timestamp: number;
+}
+
+export async function loader(): Promise<{ initialMatches: CVMatch[] }> {
+  return { initialMatches: [] };
+}
+
+export async function action({ request }: ActionArgs): Promise<ActionData> {
+  const formData = await request.formData();
+  const url = new URL(request.url);
+
+  const cvId = url.searchParams.get("cv_id")?.trim();
+
+  const query = formData.get("job_description")?.toString().trim() ?? "";
+
+  if (!cvId) {
+    return {
+      error: {
+        title: "Selection Required",
+        message: "Please select a CV in the sidebar.",
+      },
+      query,
+    };
   }
 
   const result = await apiRequestHandler(request, {
     endpoint: "/job/process",
     method: "POST",
-    body: { job_description: query, top_k: 5 },
+    body: { job_description: query, top_k: 5, cv_id: cvId },
   });
 
-  // apiRequestHandler returns a react-router data object, NOT a Response
-  // The data object has an 'errors' property for errors and 'data' property for successful responses
-  // Check for errors - react-router data object with errors or explicit error property
   const resultData = result as any;
-  const hasError = resultData?.errors || resultData?.error;
-
-  if (hasError) {
-    // Get the status code from the data response
-    const status = resultData?.status || 500;
-    const errorMessage = resultData?.errors
-      ? JSON.stringify(resultData.errors)
-      : resultData?.error;
-
-    if (status === 429) {
-      return {
-        results: [],
-        profile: null,
-        query,
-        error: {
-          title: "System Overloaded",
-          message:
-            "We're receiving too many requests right now. Please wait a moment and try again.",
-        },
-      };
-    }
-
-    if (status === 401) {
-      return {
-        results: [],
-        profile: null,
-        query,
-        error: {
-          title: "Unauthorized",
-          message: "Please log in again to continue.",
-        },
-      };
-    }
-
+  if (resultData?.errors || resultData?.error) {
     return {
       results: [],
       profile: null,
       query,
       error: {
-        title: "Search Failed",
-        message:
-          errorMessage ||
-          "Something went wrong while analyzing the job description. Please try again.",
+        title: "Analysis Failed",
+        message: resultData?.error || "Error processing request.",
       },
     };
   }
 
-  // Success case - get data from the response
-  // The react-router data object stores successful response data in the 'data' property
   const responseData = resultData?.data;
-
-  // Handle case where responseData might be undefined or not an object
-  if (!responseData || typeof responseData !== "object") {
-    return {
-      results: [],
-      profile: null,
-      query,
-      error: {
-        title: "Invalid Response",
-        message: "Received an invalid response from the server.",
-      },
-    };
-  }
-
   return {
     results: responseData?.data ?? [],
     profile: responseData?.profile ?? null,
     query,
+    cvId, // Return the ID used to keep the UI in sync
   };
 }
 
-export default function CVSearch({ actionData }: Route.ComponentProps) {
-  const location = useLocation();
+export default function CVSearch({ actionData }: ComponentProps) {
+  const submit = useSubmit();
   const navigation = useNavigation();
   const isSearching = navigation.state === "submitting";
-  const submit = useSubmit();
 
-  // Get query from actionData
-  const currentQuery = actionData?.query ?? "";
+  const [searchParams] = useSearchParams();
+  const selectedCvId = searchParams.get("cv_id") as string;
 
-  // Get results from actionData
-  const results = actionData?.results ?? [];
-  const error = actionData?.error;
+  const [isClient, setIsClient] = useState(false);
+  const [cachedProfile, setCachedProfile] = useState<any>(null);
 
-  // Get profile from location state or actionData
-  const profile = (location.state as any)?.profile ?? actionData?.profile;
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
-  const hasSearched = !!actionData;
+  const getCacheKey = useCallback(
+    (cvId?: string) => (cvId ? `cv_${cvId}` : null),
+    [],
+  );
+  const currentCacheKey = getCacheKey(selectedCvId);
 
+  // 1. Load CV-specific data whenever selectedCvId changes
+  useEffect(() => {
+    if (currentCacheKey) {
+      const cached = loadFromCache(currentCacheKey);
+
+      if (cached) {
+        setCachedProfile(cached);
+      } else {
+        setCachedProfile(null);
+      }
+    }
+  }, [selectedCvId]);
+
+  // 2. Persist new results to the correct CV slot
+  useEffect(() => {
+    if (
+      isClient &&
+      actionData?.results &&
+      actionData.results.length > 0 &&
+      selectedCvId &&
+      !actionData.error
+    ) {
+      const key = getCacheKey(selectedCvId);
+      if (key) {
+        saveToCache(key, JSON.stringify(actionData?.profile), selectedCvId);
+      }
+    }
+  }, [actionData, selectedCvId, isClient, getCacheKey]);
+
+  const results = actionData?.results;
+  const profile: any = actionData?.profile || cachedProfile;
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
-  // Auto-select first match on new results
+  // Auto-select first result
   useEffect(() => {
-    if (results && results.length > 0) {
-      setSelectedMatch(results[0]);
-    } else {
-      setSelectedMatch(null);
-    }
+    if (results && results?.length > 0) setSelectedMatch(results[0]);
+    else setSelectedMatch(null);
   }, [results]);
 
+  // 3. The Submit Handler (The Bug Fix)
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    submit(event.currentTarget);
+    const formData = new FormData(event.currentTarget);
+    const query = formData.get("job_description")?.toString()?.trim() ?? "";
+
+    if (!query || !selectedCvId) return;
+
+    submit(formData, { method: "post", action: `?cv_id=${selectedCvId}` });
   };
 
   return (
     <PageWrapper>
       <div className="flex flex-col lg:flex-row h-screen bg-white py-2 min-h-0">
-        {/* LEFT COLUMN: Discovery Sidebar */}
         <div
           className={cn(
-            "w-full lg:w-[450px] border-r border-gray-100 flex flex-col bg-white shrink-0 transition-all",
+            "w-full lg:w-[450px] border-r border-gray-100 flex flex-col bg-white shrink-0",
             selectedMatch ? "hidden lg:flex" : "flex",
           )}
         >
-          <div className="p-6 border-b border-gray-100 bg-white/50 backdrop-blur-md sticky top-0 z-10">
+          <div className="p-6 border-b border-gray-100 sticky top-0 z-10 bg-white">
             <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400 mb-6">
-              Find Your Best Fit
+              Discovery
             </h2>
             <SearchForm
               isLoading={isSearching}
-              error={error}
+              error={actionData?.error}
               onSubmit={handleSubmit}
             />
           </div>
-
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             <AnimatePresence mode="wait">
               {isSearching ? (
                 <div className="p-6 space-y-4">
@@ -174,87 +195,57 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
                     />
                   ))}
                 </div>
-              ) : hasSearched && !error ? (
+              ) : results && results.length > 0 ? (
                 <MatchList
                   results={results}
                   setSelectedMatch={setSelectedMatch}
                   selectedMatch={selectedMatch}
                 />
               ) : (
-                <div className="p-20 text-center">
-                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <SearchIcon className="text-blue-200" size={24} />
-                  </div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">
-                    Ready to Help
-                  </p>
+                <div className="p-20 text-center opacity-30 italic text-sm">
+                  No results for this CV yet.
                 </div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Strategy Dashboard */}
         <main
-          className={cn(
-            "flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative transition-colors duration-500",
-            !selectedMatch || isSearching
-              ? "hidden lg:flex flex-col items-center justify-center"
-              : "flex flex-col",
-          )}
+          className="flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative"
+          suppressHydrationWarning
         >
-          {/* Mobile Back Header */}
-          {selectedMatch && !isSearching && (
-            <div className="lg:hidden p-4 bg-white border-b border-gray-100 flex items-center sticky top-0 z-20">
-              <button
-                onClick={() => setSelectedMatch(null)}
-                className="text-sm font-black text-blue-600 flex items-center gap-2"
-              >
-                <ArrowLeft size={16} /> Back
-              </button>
-            </div>
-          )}
-
-          <AnimatePresence mode="wait">
-            {selectedMatch && !isSearching ? (
-              <motion.div
-                key={selectedMatch.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex-1 overflow-y-auto p-6 md:p-12 pb-24 space-y-8"
-              >
-                {/* 1. Analysis Overview Grid */}
-                <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                  {profile && <ProfileHighlights profile={profile} />}
-                  <MatchScore score={selectedMatch.match_score} />
-                  <MatchReasoning reasoning={selectedMatch.reasoning} />
-                </div>
-
-                {/* 2. Outreach Nudge Card */}
-                <NudgeCard nudge={selectedMatch.nudge} />
-
-                {/* 3. CV Context Block */}
-                <CVContextBlock content={selectedMatch.content} />
-              </motion.div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex-1 flex flex-col items-center justify-center text-center p-12"
-              >
-                <div className="w-24 h-24 bg-white rounded-full shadow-2xl shadow-gray-200/50 flex items-center justify-center mb-8">
-                  <Sparkles size={40} className="text-blue-500 animate-pulse" />
-                </div>
-                <h3 className="text-sm font-black uppercase tracking-widest text-gray-900">
-                  Choose a Result
-                </h3>
-                <p className="text-gray-400 text-sm mt-2 max-w-xs mx-auto">
-                  Click on a match on the left to see how it fits the job.
-                </p>
-              </motion.div>
+          <div className="h-full overflow-y-auto p-8 space-y-8">
+            {profile && (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
+                <ProfileHighlights profile={profile} />
+              </div>
             )}
-          </AnimatePresence>
+            <AnimatePresence mode="wait">
+              {selectedMatch && !isSearching ? (
+                <motion.div
+                  key={selectedMatch.id}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                >
+                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <MatchScore score={selectedMatch.match_score} />
+                    <MatchReasoning reasoning={selectedMatch.reasoning} />
+                  </div>
+                  <NudgeCard nudge={selectedMatch.nudge} />
+                  <CVContextBlock content={selectedMatch.content} />
+                </motion.div>
+              ) : (
+                <div className="flex flex-col items-center justify-center text-gray-400 flex-1">
+                  <Sparkles size={48} className="mb-4 animate-pulse" />
+                  <p className="text-sm font-bold uppercase tracking-widest">
+                    {profile
+                      ? "No search results yet for this profile"
+                      : "Select a result to analyze fit"}
+                  </p>
+                </div>
+              )}
+            </AnimatePresence>
+          </div>
         </main>
       </div>
     </PageWrapper>

@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 
-    PINECONE_INDEX_NAME: str = "applyflow-test"
+    PINECONE_INDEX_NAME: str = "applyflow-prod"
     PINECONE_API_KEY: str
 
     # Embeddings - Use "openai" or "huggingface" (free)
@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     # For Pinecone, you may need to create an index with the matching dimension
     EMBEDDING_PROVIDER: str = "huggingface"
     OPENAI_API_KEY: str | None = None
-    HUGGINGFACE_EMBEDDING_MODEL: str = "sentence-transformers/all-mpnet-base-v2"
+    HUGGINGFACE_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # JWT
     JWT_SECRET: str

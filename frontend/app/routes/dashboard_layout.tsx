@@ -9,30 +9,99 @@ import {
   Target,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
-import { Form, Link, NavLink, data, useOutletContext } from "react-router";
+import { useEffect, useState } from "react";
+import {
+  Form,
+  Link,
+  NavLink,
+  redirect,
+  useOutletContext,
+  useSearchParams,
+} from "react-router";
+import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { logout } from "~/.server/auth";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 import { Svg } from "~/components/SvgLogo";
 import { UserAvatar } from "~/components/UserAvatar";
+import type { UserCV } from "~/types/cv";
 import type { User } from "~/types/user";
-import type { Route } from "./+types/dashboard_layout";
+interface LoaderArgs {
+  request: Request;
+}
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
-  return data({ success: true });
+interface LoaderData {
+  success: boolean;
+  cvs: UserCV[];
+}
+
+interface ComponentProps {
+  loaderData: LoaderData;
+}
+
+export const loader = async ({ request }: LoaderArgs): Promise<LoaderData> => {
+  const result = await apiRequestHandler(request, {
+    endpoint: "/cv/user-cvs",
+    method: "GET",
+  }) as any;
+
+  const cvs = (result as any)?.data?.data || [] as UserCV[];
+
+  const url = new URL(request.url);
+  const pathname = url.pathname;
+
+  const requiresCvRoutes = ["/app/search"];
+
+  const requiresCv = requiresCvRoutes.some((route) =>
+    pathname.startsWith(route),
+  );
+
+  if (cvs.length === 0 && requiresCv) {
+    throw redirect(`/app?redirectTo=${encodeURIComponent(pathname)}`);
+  }
+
+  return {
+    success: true,
+    cvs,
+  };
 };
 
-export const action = async ({ request }: Route.ActionArgs) => {
+export const action = async ({ request }: LoaderArgs) => {
   return logout(request);
 };
 
-interface DashboardContext {
+export interface DashboardContext {
   user: User | null;
+  cvs: UserCV[];
 }
 
-export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
+export default function DashboardLayout({ loaderData }: ComponentProps) {
   const { user } = useOutletContext<DashboardContext>();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const urlCvId = searchParams.get("cv_id");
+  const cvs = loaderData?.cvs || [];
+
+  useEffect(() => {
+    if (!urlCvId && cvs.length > 0) {
+      const next = new URLSearchParams(searchParams);
+      next.set("cv_id", cvs[0].id);
+      setSearchParams(next, { replace: true });
+    }
+  }, [urlCvId, cvs, searchParams, setSearchParams]);
+
+  const selectedCvId = urlCvId;
+
+const updateSelectedCV = (cvId: string | null): void => {
+    const next = new URLSearchParams(searchParams);
+
+    if (cvId) next.set("cv_id", cvId);
+    else next.delete("cv_id");
+
+    setSearchParams(next);
+  };
+
+  const selectedCV = cvs.find((cv: UserCV) => cv.id === selectedCvId);
 
   return (
     <div className="flex h-screen w-full bg-[#fcfcfd]">
@@ -135,9 +204,34 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
           <p className="text-[11px] font-bold text-blue-600 uppercase mb-1">
             Your Resume
           </p>
-          <p className="text-xs text-blue-900 font-medium truncate">
-            Standard_Resume_2026.pdf
-          </p>
+          {cvs.length === 0 ? (
+            <p className="text-xs text-gray-500">
+              No resumes.{" "}
+              <Link to="/app/upload" className="underline">
+                Upload now
+              </Link>
+            </p>
+          ) : (
+            <>
+              {selectedCV && (
+                <p className="text-xs text-blue-900 font-bold truncate mb-2">
+                  {selectedCV.file_name}
+                </p>
+              )}
+              <select
+                onChange={(e) => updateSelectedCV(e.target.value || null)}
+                value={selectedCvId || ""}
+                className="w-full p-1 text-xs bg-transparent border-none outline-none text-blue-900 font-medium rounded focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Select Resume</option>
+                {cvs.map((cv: UserCV) => (
+                  <option key={cv.id} value={cv.id}>
+                    {cv.file_name}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
         </div>
       </aside>
 
@@ -166,7 +260,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
 
         {/* Page Content - Scrollable */}
         <div className="flex-1 overflow-auto p-6">
-          <AnimatedOutlet context={{ user }} />
+          <AnimatedOutlet context={{ user, cvs }} />
         </div>
       </main>
 
@@ -181,7 +275,14 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
   );
 }
 
-function FeatureNavItem({ icon, label, active, isComingSoon }: any) {
+interface FeatureNavItemProps {
+  icon: React.ReactNode;
+  label: string;
+  active?: boolean;
+  isComingSoon?: boolean;
+}
+
+function FeatureNavItem({ icon, label, active, isComingSoon }: FeatureNavItemProps) {
   return (
     <div
       className={`flex items-center justify-between p-3 rounded-xl transition-all ${active ? "bg-gray-50 text-blue-600" : "text-gray-500 opacity-60"}`}

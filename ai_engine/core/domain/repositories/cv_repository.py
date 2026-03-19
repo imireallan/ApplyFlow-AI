@@ -12,3 +12,8 @@ class CVRepository(ABC):
     @abstractmethod
     def create(self, cv: CV) -> CV:
         pass
+
+    @abstractmethod
+    def list_by_user(self, user_id: UUID) -> list[CV]:
+        """List all CVs for a user"""
+        pass

@@ -26,6 +26,7 @@ class LangChainLLMAdapter(LLMPort):
     """
 
     def __init__(self) -> None:
+        print("🔥 Initializing LLM ONCE")
         self.provider = os.getenv("LLM_PROVIDER", "groq").lower()
 
         if self.provider == "openai":

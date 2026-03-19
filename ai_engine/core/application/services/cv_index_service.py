@@ -52,7 +52,6 @@ class CVIndexService:
         chunks = chunk_text(cv.content)
 
         for i, chunk in enumerate(chunks):
-
             vector_id = f"{cv.id}_{i}"
 
             self.vector_store.upsert(

@@ -23,6 +23,7 @@ async def process_job(
             job_description=payload.job_description,
             top_k=payload.top_k,
             user_id=str(current_user.id),
+            cv_id=payload.cv_id,
         )
 
         # Get user's profile

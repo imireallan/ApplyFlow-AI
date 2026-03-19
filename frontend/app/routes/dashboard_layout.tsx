@@ -15,6 +15,7 @@ import {
   Link,
   NavLink,
   data,
+  redirect,
   useOutletContext,
   useSearchParams,
 } from "react-router";
@@ -28,25 +29,46 @@ import type { User } from "~/types/user";
 import type { Route } from "./+types/dashboard_layout";
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  const result = await apiRequestHandler(request, {
-    endpoint: "/cv/user-cvs",
-    method: "GET",
-  });
+  try {
+    const result = await apiRequestHandler(request, {
+      endpoint: "/cv/user-cvs",
+      method: "GET",
+    });
 
-  const resultData = result as any;
+    // Check for API errors (401, 500, etc.)
+    if (
+      (result as any).error ||
+      (result as any).status === 401 ||
+      (result as any).status >= 500
+    ) {
+      const loginUrl = new URL(request.url);
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirectTo", new URL(request.url).pathname);
+      throw redirect(loginUrl.toString());
+    }
 
-  const cvs = resultData.data?.data || [];
-  return data({
-    success: true,
-    cvs,
-  });
+    const resultData = result as any;
+    const cvs = resultData.data?.data || [];
+    return data({
+      success: true,
+      cvs,
+    });
+  } catch (error: any) {
+    if (error.status === 401) {
+      const loginUrl = new URL(request.url);
+      loginUrl.pathname = "/login";
+      loginUrl.searchParams.set("redirectTo", new URL(request.url).pathname);
+      throw redirect(loginUrl.toString());
+    }
+    throw error;
+  }
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
   return logout(request);
 };
 
-interface DashboardContext {
+export interface DashboardContext {
   user: User | null;
   cvs: UserCV[];
   selectedCvId?: string;
@@ -171,11 +193,7 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
           <p className="text-[11px] font-bold text-blue-600 uppercase mb-1">
             Your Resume
           </p>
-          {selectedCV ? (
-            <p className="text-xs text-blue-900 font-medium truncate">
-              {selectedCV.file_name}
-            </p>
-          ) : cvs.length === 0 ? (
+          {cvs.length === 0 ? (
             <p className="text-xs text-gray-500">
               No resumes.{" "}
               <Link to="/app/upload" className="underline">
@@ -183,18 +201,25 @@ export default function DashboardLayout({ loaderData }: Route.ComponentProps) {
               </Link>
             </p>
           ) : (
-            <select
-              onChange={(e) => updateSelectedCV(e.target.value || null)}
-              value={selectedCvId || ""}
-              className="w-full p-1 text-xs bg-transparent border-none outline-none text-blue-900 font-medium rounded focus:ring-1 focus:ring-blue-500"
-            >
-              <option value="">Select Resume</option>
-              {cvs.map((cv: UserCV) => (
-                <option key={cv.id} value={cv.id}>
-                  {cv.file_name}
-                </option>
-              ))}
-            </select>
+            <>
+              {selectedCV && (
+                <p className="text-xs text-blue-900 font-bold truncate mb-2">
+                  {selectedCV.file_name}
+                </p>
+              )}
+              <select
+                onChange={(e) => updateSelectedCV(e.target.value || null)}
+                value={selectedCvId || ""}
+                className="w-full p-1 text-xs bg-transparent border-none outline-none text-blue-900 font-medium rounded focus:ring-1 focus:ring-blue-500"
+              >
+                <option value="">Select Resume</option>
+                {cvs.map((cv: UserCV) => (
+                  <option key={cv.id} value={cv.id}>
+                    {cv.file_name}
+                  </option>
+                ))}
+              </select>
+            </>
           )}
         </div>
       </aside>

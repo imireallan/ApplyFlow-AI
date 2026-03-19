@@ -1,7 +1,12 @@
 import { ArrowLeft, Search as SearchIcon, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
-import { useLocation, useNavigation, useSubmit } from "react-router";
+import {
+  useLocation,
+  useNavigation,
+  useOutletContext,
+  useSubmit,
+} from "react-router";
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
 import { MatchList } from "~/components/MatchList";
@@ -31,7 +36,24 @@ export async function loader() {
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
-  const query = formData.get("job_description")?.toString()?.trim() ?? "";
+
+  const cvId = (formData.get("cv_id")?.toString() || "").trim();
+
+  // 2. Extract query
+  const query = formData.get("job_description")?.toString().trim() ?? "";
+
+  // 3. Robust check: if cvId is empty, we can't proceed
+  if (!cvId) {
+    return {
+      error: {
+        title: "Selection Required",
+        message: "Please select a CV before searching.",
+      },
+      query,
+    };
+  }
+
+  console.log({ cvId });
 
   // Check if this is a cached submission
   const isCached = formData.get("_cached") === "true";
@@ -59,10 +81,11 @@ export async function action({ request }: Route.ActionArgs) {
     return { results: [], profile: null, query: "" };
   }
 
+  const body = { job_description: query, top_k: 5, cv_id: cvId };
   const result = await apiRequestHandler(request, {
     endpoint: "/job/process",
     method: "POST",
-    body: { job_description: query, top_k: 5 },
+    body,
   });
 
   // apiRequestHandler returns a react-router data object, NOT a Response
@@ -140,8 +163,13 @@ export async function action({ request }: Route.ActionArgs) {
   };
 }
 
+export interface DashboardContext {
+  selectedCvId?: string;
+}
+
 export default function CVSearch({ actionData }: Route.ComponentProps) {
   const location = useLocation();
+  const { selectedCvId } = useOutletContext<DashboardContext>();
   const navigation = useNavigation();
   const isSearching = navigation.state === "submitting";
   const submit = useSubmit();
@@ -250,6 +278,10 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
 
     if (!query) return;
 
+    if (selectedCvId) {
+      formData.set("cv_id", selectedCvId.toString());
+    }
+
     // Check sessionStorage for cached results (only on client)
     if (isClient) {
       try {
@@ -267,6 +299,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
             // Use cached results
             const cachedFormData = new FormData();
             cachedFormData.set("job_description", query);
+
             cachedFormData.set("_cached", "true");
             cachedFormData.set(
               "_cached_results",
@@ -286,7 +319,7 @@ export default function CVSearch({ actionData }: Route.ComponentProps) {
     }
 
     // No cache hit - submit normally
-    submit(event.currentTarget);
+    submit(formData, { method: "post" });
   };
 
   return (

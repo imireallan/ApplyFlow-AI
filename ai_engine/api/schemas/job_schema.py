@@ -6,6 +6,7 @@ from pydantic import BaseModel
 class JobRequest(BaseModel):
     job_description: str
     top_k: int = 5
+    cv_id: Optional[str] = None
 
 
 class JobMatch(BaseModel):

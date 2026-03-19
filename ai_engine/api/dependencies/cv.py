@@ -5,6 +5,7 @@ from core.application.ports.llm_port import LLMPort
 from core.application.ports.vector_store_port import VectorStorePort
 from core.application.services.cv_index_service import CVIndexService
 from core.application.services.cv_profile_service import CVProfileService
+from core.application.services.cv_query_service import CVQueryService
 from core.application.services.job_application_service import JobApplicationService
 from core.domain.repositories.cv_embedding_repository import CVEmbeddingRepository
 from core.domain.repositories.cv_profile_repository import CVProfileRepository
@@ -63,12 +64,23 @@ def get_cv_index_service(
     )
 
 
+def get_cv_query_service(
+    cv_repository: CVRepository = Depends(get_cv_repository),
+) -> CVQueryService:
+    return CVQueryService(
+        cv_repository,
+    )
+
+
 def get_job_application_service(
     vector_store: VectorStorePort = Depends(get_vector_store),
     llm: LLMPort = Depends(get_llm),
     profile_repository: CVProfileRepository = Depends(get_cv_profile_repository),
+    cv_embedding_repo: CVEmbeddingRepository = Depends(get_cv_embedding_repository),
 ) -> JobApplicationService:
-    return JobApplicationService(vector_store, llm, profile_repository)
+    return JobApplicationService(
+        vector_store, llm, profile_repository, cv_embedding_repo
+    )
 
 
 def get_cv_profile_service(

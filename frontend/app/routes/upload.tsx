@@ -1,7 +1,6 @@
 import { redirect } from "react-router";
 // Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
-import { PageWrapper } from "~/components/PageWrapper";
 import { UploadForm } from "~/components/UploadForm";
 
 interface ActionArgs {
@@ -71,18 +70,18 @@ export async function action({ request }: ActionArgs) {
 
 export default function UploadPage({ actionData }: ComponentProps) {
   return (
-    <PageWrapper>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-[#fcfcfd] p-6">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-black text-gray-900 tracking-tight">
-            Upload Your Resume
-          </h1>
-          <p className="text-gray-500 mt-2">
-            Get started by uploading your resume
-          </p>
-        </div>
+    <div className="w-full h-full flex flex-col items-center justify-center p-8 lg:p-12">
+      <div className="text-center max-w-sm w-full">
+        <h1 className="text-xl lg:text-2xl font-black text-gray-900 tracking-tight">
+          Upload Your Resume
+        </h1>
+        <p className="text-base lg:text-lg text-gray-600 mt-2 leading-relaxed">
+          Get started by uploading your resume
+        </p>
+      </div>
+      <div className="w-full max-w-sm">
         <UploadForm error={actionData?.error} />
       </div>
-    </PageWrapper>
+    </div>
   );
 }

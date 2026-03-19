@@ -116,8 +116,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App({ loaderData }: Route.ComponentProps) {
-  console.log("google id");
-  console.log(import.meta.env.VITE_GOOGLE_CLIENT_ID);
   return (
     <>
       <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>

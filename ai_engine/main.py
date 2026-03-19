@@ -9,10 +9,7 @@ from sqlalchemy import text
 from api.exception_handlers import VectorStoreError
 from api.routes import auth_routes, cv_routes, job_routes
 from core.config.settings import settings
-from core.container import container
 from core.database import engine
-from infrastructure.llm.langchain_llm_adapter import LangChainLLMAdapter
-from infrastructure.vector.pinecone_vector_store import PineconeVectorStoreAdapter
 
 # Set up logger
 logger = logging.getLogger(__name__)
@@ -88,20 +85,6 @@ async def lifespan(app: FastAPI):  # type: ignore
         print("✅ Database Connected")
     except Exception as e:
         print("❌ Database Connection Failed:", e)
-        raise e
-
-    try:
-        container.vector_store = PineconeVectorStoreAdapter()
-        print("✅ Vector Store Initialized")
-    except Exception as e:
-        print("❌ Vector Store Initialization Failed:", e)
-        raise e
-
-    try:
-        container.llm = LangChainLLMAdapter()
-        print("✅ LLM Initialized")
-    except Exception as e:
-        print("❌ LLM Initialization Failed:", e)
         raise e
 
     # Check migration status (but don't run migrations)

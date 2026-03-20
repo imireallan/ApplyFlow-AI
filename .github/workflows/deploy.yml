@@ -34,22 +34,32 @@ jobs:
 
       # Build and push backend image
       - name: Build and push ai_engine image
-        run: |
-          docker build -t ai_engine ./ai_engine
-          docker tag ai_engine:latest ${{ secrets.ECR_AI_ENGINE_URI }}:latest
-          docker push ${{ secrets.ECR_AI_ENGINE_URI }}:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./ai_engine
+          push: true
+          tags: |
+            ${{ secrets.ECR_AI_ENGINE_URI }}:latest
+            ${{ secrets.ECR_AI_ENGINE_URI }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.ECR_AI_ENGINE_URI }}:cache
+          cache-to: type=registry,ref=${{ secrets.ECR_AI_ENGINE_URI }}:cache,mode=max
 
       # Build and push frontend image
       - name: Build and push frontend image
-        run: |
-          docker build -t frontend \
-            --build-arg VITE_AI_API_URL=${{ secrets.VITE_AI_API_URL }} \
-            --build-arg VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }} \
-            --build-arg VITE_PUBLIC_POSTHOG_TOKEN=${{ secrets.VITE_PUBLIC_POSTHOG_TOKEN }} \
-            --build-arg VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }} \
-            ./frontend
-          docker tag frontend:latest ${{ secrets.ECR_FRONTEND_URI }}:latest
-          docker push ${{ secrets.ECR_FRONTEND_URI }}:latest
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ secrets.ECR_FRONTEND_URI }}:latest
+            ${{ secrets.ECR_FRONTEND_URI }}:${{ github.sha }}
+          build-args: |
+            VITE_AI_API_URL=${{ secrets.VITE_AI_API_URL }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+            VITE_PUBLIC_POSTHOG_TOKEN=${{ secrets.VITE_PUBLIC_POSTHOG_TOKEN }}
+            VITE_PUBLIC_POSTHOG_HOST=${{ secrets.VITE_PUBLIC_POSTHOG_HOST }}
+          cache-from: type=registry,ref=${{ secrets.ECR_FRONTEND_URI }}:cache
+          cache-to: type=registry,ref=${{ secrets.ECR_FRONTEND_URI }}:cache,mode=max
 
       # Deploy on EC2
       - name: Deploy containers on EC2
@@ -60,45 +70,33 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           command_timeout: 60m
           script: |
-            set -e
+            set -euxo pipefail
 
-            # Ensure the .ssh directory exists
-            mkdir -p ~/.ssh
-            chmod 700 ~/.ssh
-
-            # Add GitHub to known_hosts to prevent "Host key verification failed"
-            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
-            
             APP_DIR=/home/ec2-user/applyflow
 
-            # Check if directory exists and is a git repo; if not, clone it
             if [ ! -d "$APP_DIR/.git" ]; then
-              echo "Repository not found. Cloning..."
               git clone ${{ secrets.REPO_URL }} $APP_DIR
             fi
 
             cd $APP_DIR
 
-            # Ensure we have the latest docker-compose.yml and local files
+            docker compose pull
             git pull origin main
 
-            # Update environment variables
-            echo "${{ secrets.ENV_FILE }}" > .env
+            cat <<EOF > .env
+            ${{ secrets.ENV_FILE }}
+            EOF
 
-            # Authenticate Docker with ECR
             aws ecr get-login-password --region us-east-1 \
-                | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+              | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
 
-            # Refresh images and restart services
-            docker compose pull
-            docker compose down
-
-            # Start DB first and run migrations
             docker compose up -d db
+
             echo "Waiting for DB..."
-            sleep 10
+            until docker compose exec db pg_isready -U postgres; do
+              sleep 2
+            done
 
-            docker compose run --rm ai_engine alembic upgrade head
+            docker compose up -d --remove-orphans
 
-            # Bring everything else up
-            docker compose up -d
+            docker compose exec ai_engine alembic upgrade head

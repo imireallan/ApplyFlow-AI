@@ -156,3 +156,30 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
     </main>
   );
 }
+
+export function shouldRevalidate({
+  currentUrl,
+  nextUrl,
+  actionResult,
+  defaultShouldRevalidate,
+}: any) {
+  // 1. If it's an action (like processing a job) that returned a cvId, don't revalidate
+  if (actionResult?.cvId) {
+    return false;
+  }
+
+  // 2. If it's a navigation (like changing the dropdown)
+  // Check if the pathname is the same and we only changed the cv_id
+  if (currentUrl.pathname === nextUrl.pathname) {
+    const currentCvId = currentUrl.searchParams.get("cv_id");
+    const nextCvId = nextUrl.searchParams.get("cv_id");
+
+    if (currentCvId !== nextCvId) {
+      // The user just picked a different CV.
+      // We already have the list of CVs in memory, so don't hit the API again.
+      return false;
+    }
+  }
+
+  return defaultShouldRevalidate;
+}

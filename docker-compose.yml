@@ -1,3 +1,5 @@
+version: "3.8"
+
 services:
   nginx:
     image: nginx:alpine
@@ -8,14 +10,40 @@ services:
     depends_on:
       - frontend
       - ai_engine
+    mem_limit: 128m
+    cpus: 0.25
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     image: 739275457094.dkr.ecr.us-east-1.amazonaws.com/applyflow-frontend
     env_file: .env
+    mem_limit: 256m
+    cpus: 0.5
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   ai_engine:
     image: 739275457094.dkr.ecr.us-east-1.amazonaws.com/applyflow-ai-engine
     env_file: .env
+    mem_limit: 1g
+    cpus: 1.5
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
 
   db:
     image: postgres:15-alpine
@@ -25,6 +53,20 @@ services:
       POSTGRES_PASSWORD: password123
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    mem_limit: 512m
+    cpus: 0.75
+    restart: unless-stopped
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=64MB
+      -c effective_cache_size=256MB
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 volumes:
   postgres_data:

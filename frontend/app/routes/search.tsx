@@ -5,9 +5,8 @@ import { useNavigation, useSearchParams, useSubmit } from "react-router";
 // Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
+import { MatchExplanationPanel } from "~/components/MatchExplanation";
 import { MatchList } from "~/components/MatchList";
-import { MatchReasoning } from "~/components/MatchReasoning";
-import { MatchScore } from "~/components/MatchScore";
 import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
@@ -31,21 +30,49 @@ interface ActionData {
   fromCache?: boolean;
   cvId?: string;
 }
+interface LoaderData {
+  results?: CVMatch[];
+  profile?: any;
+  // query?: string;
+  // error?: {
+  //   title: string;
+  //   message: string;
+  // };
+  // fromCache?: boolean;
+  // cvId?: string;
+}
 
 interface ComponentProps {
   actionData?: ActionData;
+  loaderData?: LoaderData;
 }
 
-interface CachedSearchResult {
-  // query: string;
-  cvId: string;
-  // results: CVMatch[];
-  profile: any;
-  timestamp: number;
-}
+export async function loader() {
+  // return { initialMatches: [] };
+  return {
+    results: [
+      {
+        id: "1",
+        match_score: 0.9,
+        reasoning:
+          "Strong alignment with backend experience, especially Django and API design.",
+        nudge:
+          "Consider adding more detail on testing and system design experience.",
 
-export async function loader(): Promise<{ initialMatches: CVMatch[] }> {
-  return { initialMatches: [] };
+        content:
+          "Designed and implemented RESTful APIs that improved data access efficiency by 20%. Applied advanced query optimization techniques within Django ORM, achieving a 30% reduction in database response times.",
+
+        // NEW MOCK DATA
+        highlights: ["RESTful APIs", "Django ORM", "query optimization"],
+        insight:
+          "This section demonstrates strong backend experience and directly matches key job requirements like Django and API development.",
+        missing_skills: ["pytest", "API security", "Docker"],
+        improved_content:
+          "Designed and implemented scalable RESTful APIs using Django, improving data access efficiency by 20%. Optimized database queries within Django ORM, reducing response times by 30% and enhancing overall system performance.",
+      },
+    ],
+    profile: null,
+  };
 }
 
 export async function action({ request }: ActionArgs): Promise<ActionData> {
@@ -94,7 +121,7 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
   };
 }
 
-export default function CVSearch({ actionData }: ComponentProps) {
+export default function CVSearch({ actionData, loaderData }: ComponentProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
   const isSearching = navigation.state === "submitting";
@@ -144,7 +171,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
     }
   }, [actionData, selectedCvId, isClient, getCacheKey]);
 
-  const results = actionData?.results;
+  const results = loaderData?.results || actionData?.results;
   const profile: any = actionData?.profile || cachedProfile;
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 
@@ -225,7 +252,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
               </button>
             </div>
           )}
-          <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 sm:pb-24">
+          <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32 sm:pb-40">
             <div className="space-y-4 sm:space-y-6 lg:space-y-8 max-w-7xl mx-auto">
               {profile && (
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
@@ -247,18 +274,28 @@ export default function CVSearch({ actionData }: ComponentProps) {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-12 gap-4 sm:gap-6">
-                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-12 gap-4 sm:gap-6">
+                      {/* <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
                         <MatchScore score={selectedMatch.match_score} />
+                      </div> */}
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                        {/* <MatchReasoning reasoning={selectedMatch.reasoning} /> */}
+                        <MatchExplanationPanel
+                          score={selectedMatch.match_score}
+                          reasoning={selectedMatch.reasoning}
+                        />
                       </div>
                       <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
-                        <MatchReasoning reasoning={selectedMatch.reasoning} />
-                      </div>
-                      <div className="col-span-full">
                         <NudgeCard nudge={selectedMatch.nudge} />
                       </div>
-                      <div className="col-span-full">
-                        <CVContextBlock content={selectedMatch.content} />
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                        <CVContextBlock
+                          content={selectedMatch.content}
+                          highlights={selectedMatch.highlights}
+                          insight={selectedMatch.insight}
+                          missingSkills={selectedMatch.missing_skills}
+                          improvedContent={selectedMatch.improved_content}
+                        />
                       </div>
                     </div>
                   </motion.div>

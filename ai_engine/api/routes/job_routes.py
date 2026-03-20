@@ -27,7 +27,7 @@ async def process_job(
         )
 
         # Get user's profile
-        profile = profile_service.get_profile_by_user_id(str(current_user.id))
+        profile = profile_service.get_profile_by_user_id(current_user.id)
         profile_data = None
         if profile:
             profile_data = UserProfile(

@@ -58,8 +58,9 @@ export async function createTokenSession({
   accessToken: string;
   redirectTo: string;
 }) {
-  // Token expires in 60 minutes (matches backend ACCESS_TOKEN_EXPIRE_MINUTES)
-  const maxAge = 60 * 60; // 60 minutes in seconds
+  // 7 days in seconds: 7 days * 24 hours * 60 minutes * 60 seconds
+  const DAYS_TO_SECONDS = 24 * 60 * 60;
+  const maxAge = 7 * DAYS_TO_SECONDS; // 604,800 seconds
 
   return redirect(redirectTo, {
     headers: {

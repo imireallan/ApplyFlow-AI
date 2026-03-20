@@ -67,9 +67,10 @@ class JobApplicationService:
         user_id: str,
         cv_id: Optional[str] = None,
     ) -> list[MatchAnalysisResult]:
+        cv_id_uuid = UUID(cv_id)
 
         # Fetch user's CV profile (optional, enriches analysis)
-        profile = self.profile_repository.get_by_user_id(user_id)
+        profile = self.profile_repository.get_by_user_id(cv_id_uuid)
 
         matches = self.vector_store.query(
             job_description,

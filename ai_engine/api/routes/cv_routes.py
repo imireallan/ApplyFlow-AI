@@ -82,7 +82,7 @@ async def generate_profile(
 
     profile = service.generate_profile(
         cv_id=cv_id,
-        user_id=str(current_user.id),
+        user_id=current_user.id,
     )
 
     return {
@@ -97,7 +97,7 @@ async def get_profile(
     service: CVProfileService = Depends(get_cv_profile_service),
 ) -> dict[str, Any]:
 
-    profile = service.get_profile_by_user_id(str(current_user.id))
+    profile = service.get_profile_by_user_id(current_user.id)
 
     if not profile:
         return {

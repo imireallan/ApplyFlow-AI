@@ -13,11 +13,19 @@ class SQLAlchemyCVProfileRepository(CVProfileRepository, BaseRepository[CVProfil
             return None
         return self._to_domain(orm)
 
-    def get_by_user_id(self, user_id: str) -> CVProfile | None:
-        orm = self.session.query(CVProfileORM).filter_by(user_id=user_id).first()
-        if orm is None:
-            return None
-        return self._to_domain(orm)
+    def get_by_cv_id(self, cv_id: UUID) -> CVProfile | None:
+        orm = self.session.query(CVProfileORM).filter_by(cv_id=cv_id).first()
+        return self._to_domain(orm) if orm else None
+
+    def get_by_user_id(self, user_id: UUID) -> CVProfile | None:
+        # Order by updated_at to get the 'Active' profile
+        orm = (
+            self.session.query(CVProfileORM)
+            .filter_by(user_id=user_id)
+            .order_by(CVProfileORM.updated_at.desc()) 
+            .first()
+        )
+        return self._to_domain(orm) if orm else None
 
     def create(self, profile: CVProfile) -> CVProfile:
         orm = self._to_orm(profile)

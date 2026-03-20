@@ -17,20 +17,20 @@ class CVProfileService:
         self.cv_repository = cv_repository
         self.profile_repository = profile_repository
 
-    def generate_profile(self, cv_id: str, user_id: str) -> CVProfile:
+    def generate_profile(self, cv_id: str, user_id: UUID) -> CVProfile:
         cv_id_uuid = UUID(cv_id)
-        user_uuid = UUID(user_id)
 
         cv = self.cv_repository.get_by_id(cv_id_uuid)
-
         if not cv:
             raise ValueError("CV not found")
+
+        if cv.user_id != user_id:
+            raise ValueError("Unauthorized: You do not own this CV")
 
         # Extract structured profile using LLM
         extracted = self.llm.extract_cv_profile(cv.content)
 
-        # Check if user already has a profile
-        existing = self.profile_repository.get_by_user_id(user_id)
+        existing = self.profile_repository.get_by_cv_id(cv_id_uuid)
 
         if existing:
             # Update existing profile
@@ -46,7 +46,7 @@ class CVProfileService:
         # Create new profile
         profile = CVProfile(
             id=uuid4(),
-            user_id=user_uuid,
+            user_id=user_id,
             cv_id=cv_id_uuid,
             name=extracted.name,
             summary=extracted.summary,
@@ -57,5 +57,5 @@ class CVProfileService:
 
         return self.profile_repository.create(profile)
 
-    def get_profile_by_user_id(self, user_id: str) -> CVProfile | None:
+    def get_profile_by_user_id(self, user_id: UUID) -> CVProfile | None:
         return self.profile_repository.get_by_user_id(user_id)

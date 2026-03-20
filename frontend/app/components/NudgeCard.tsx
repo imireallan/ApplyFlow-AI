@@ -33,14 +33,18 @@ export function NudgeCard({ nudge }: NudgeCardProps) {
       <button
         onClick={handleCopy}
         className={cn(
-          "flex items-center justify-center gap-2 px-4 py-2 mt-6 rounded-full text-[11px] font-black transition-all active:scale-95 shadow-lg w-auto self-end sm:px-6 sm:py-3 sm:text-xs",
+          "flex items-center gap-2 px-4 py-2 mt-6 rounded-full font-black transition-all active:scale-95 shadow-lg self-end",
+          "text-[11px] sm:text-xs",
+          "px-3 sm:px-6 py-1.5 sm:py-3",
           copied
             ? "bg-emerald-500 text-white"
             : "bg-white text-black hover:bg-blue-50",
         )}
       >
         {copied ? <CheckCircle size={14} /> : <ClipboardIcon size={14} />}
-        {copied ? "Copied!" : "Copy Ready Message"}
+        <span className="leading-none">
+          {copied ? "Copied!" : "Copy Ready Message"}
+        </span>
       </button>
       <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[100px] pointer-events-none" />
     </section>

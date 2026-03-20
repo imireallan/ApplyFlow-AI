@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigation, useSearchParams, useSubmit } from "react-router";
@@ -214,37 +214,77 @@ export default function CVSearch({ actionData }: ComponentProps) {
           className="flex-1 min-h-0 bg-gray-50/30 overflow-hidden relative"
           suppressHydrationWarning
         >
-          <div className="h-full overflow-y-auto p-8 space-y-8">
-            {profile && (
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 mb-8">
-                <ProfileHighlights profile={profile} />
-              </div>
-            )}
-            <AnimatePresence mode="wait">
-              {selectedMatch && !isSearching ? (
-                <motion.div
-                  key={selectedMatch.id}
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-                    <MatchScore score={selectedMatch.match_score} />
-                    <MatchReasoning reasoning={selectedMatch.reasoning} />
+          {/* Mobile Back Header */}
+          {selectedMatch && (
+            <div className="lg:hidden p-4 bg-white border-b border-gray-100 flex items-center sticky top-0 z-20">
+              <button
+                onClick={() => setSelectedMatch(null)}
+                className="text-sm font-black text-blue-600 flex items-center gap-2"
+              >
+                <ArrowLeft size={16} /> Back
+              </button>
+            </div>
+          )}
+          <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 sm:pb-24">
+            <div className="space-y-4 sm:space-y-6 lg:space-y-8 max-w-7xl mx-auto">
+              {profile && (
+                <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
+                  <div className="xl:col-span-12">
+                    <ProfileHighlights profile={profile} />
                   </div>
-                  <NudgeCard nudge={selectedMatch.nudge} />
-                  <CVContextBlock content={selectedMatch.content} />
-                </motion.div>
-              ) : (
-                <div className="flex flex-col items-center justify-center text-gray-400 flex-1">
-                  <Sparkles size={48} className="mb-4 animate-pulse" />
-                  <p className="text-sm font-bold uppercase tracking-widest">
-                    {profile
-                      ? "No search results yet for this profile"
-                      : "Select a result to analyze fit"}
-                  </p>
                 </div>
               )}
-            </AnimatePresence>
+              <AnimatePresence mode="wait">
+                {isSearching ? (
+                  <motion.div
+                    className="flex-1 min-h-[300px] sm:min-h-[400px]"
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 1 }}
+                  />
+                ) : selectedMatch ? (
+                  <motion.div
+                    key={selectedMatch.id}
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-12 gap-4 sm:gap-6">
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
+                        <MatchScore score={selectedMatch.match_score} />
+                      </div>
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                        <MatchReasoning reasoning={selectedMatch.reasoning} />
+                      </div>
+                      <div className="col-span-full">
+                        <NudgeCard nudge={selectedMatch.nudge} />
+                      </div>
+                      <div className="col-span-full">
+                        <CVContextBlock content={selectedMatch.content} />
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : results && results.length > 0 ? (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex flex-col items-center justify-center text-gray-400 min-h-[300px] sm:min-h-[400px]"
+                  >
+                    <p className="text-sm sm:text-base font-bold uppercase tracking-widest w-fit whitespace-nowrap">
+                      Click a match to see details
+                    </p>
+                  </motion.div>
+                ) : !profile ? (
+                  <div className="hidden md:flex flex-col items-center justify-center min-h-[400px] sm:min-h-[500px] text-gray-400">
+                    <Sparkles
+                      size={40}
+                      className="mb-6 sm:mb-8 animate-pulse"
+                    />
+                    <p className="text-base sm:text-md font-bold uppercase tracking-widest w-fit whitespace-nowrap">
+                      Select a result to analyze fit
+                    </p>
+                  </div>
+                ) : null}
+              </AnimatePresence>
+            </div>
           </div>
         </main>
       </div>

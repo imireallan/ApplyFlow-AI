@@ -19,8 +19,8 @@ export async function loader() {
 
 export async function action({ request }: ActionArgs) {
   const url = new URL(request.url);
-
   const redirectTo = url.searchParams.get("redirectTo")?.trim();
+
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -28,44 +28,43 @@ export async function action({ request }: ActionArgs) {
     return { error: "Please select a valid PDF file." };
   }
 
-  const apiData = new FormData();
-  apiData.append("file", file);
+  try {
+    const apiData = new FormData();
+    apiData.append("file", file);
 
-  // Step 1: Upload CV and index
-  const indexResult = (await apiRequestHandler(request, {
-    endpoint: "/cv/index-cv",
-    method: "POST",
-    body: apiData,
-  })) as any;
+    const indexResponse = (await apiRequestHandler(request, {
+      endpoint: "/cv/index-cv",
+      method: "POST",
+      body: apiData,
+    })) as any;
 
-  if (indexResult instanceof Response || (indexResult as any).data?.error) {
-    const error =
-      indexResult instanceof Response
-        ? await indexResult.json()
-        : indexResult.data.error;
-    return { error };
+    const getErrorMessage = async (res: any) =>
+      res instanceof Response
+        ? (await res.json()).detail || "API Error"
+        : res?.data?.error;
+
+    if (indexResponse instanceof Response || indexResponse?.data?.error) {
+      return { error: await getErrorMessage(indexResponse) };
+    }
+
+    const cvId = indexResponse.data?.cv_id;
+    if (!cvId) return { error: "CV indexing failed: missing CV ID." };
+
+    const profileResponse = (await apiRequestHandler(request, {
+      endpoint: `/cv/${cvId}/profile`,
+      method: "POST",
+    })) as any;
+
+    if (profileResponse instanceof Response || profileResponse?.data?.error) {
+      return { error: await getErrorMessage(profileResponse) };
+    }
+
+    const destination = redirectTo || `/app/search?cv_id=${cvId}`;
+    return redirect(destination);
+  } catch (error) {
+    console.error("Action Error:", error);
+    return { error: "An unexpected error occurred. Please try again." };
   }
-
-  const cvId = indexResult.data?.cv_id;
-  if (!cvId) {
-    return { error: "CV indexing failed: missing CV ID." };
-  }
-
-  // Step 2: Generate profile from CV
-  const profileResult = (await apiRequestHandler(request, {
-    endpoint: `/cv/${cvId}/profile`,
-    method: "POST",
-  })) as any;
-
-  if (profileResult instanceof Response || (profileResult as any).data?.error) {
-    const error =
-      indexResult instanceof Response
-        ? await indexResult.json()
-        : profileResult.data.error;
-    return { error };
-  }
-
-  return redirect(redirectTo || `/app/search?cv_id=${cvId}`);
 }
 
 export default function UploadPage({ actionData }: ComponentProps) {

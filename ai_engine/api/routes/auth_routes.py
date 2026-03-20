@@ -50,7 +50,7 @@ def login_google(
         httponly=True,
         secure=settings.SECURE_COOKIE,
         samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # max_age in seconds
+        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
     )
 
     return LoginResponse(

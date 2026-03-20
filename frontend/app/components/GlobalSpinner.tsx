@@ -1,9 +1,41 @@
-import { motion, AnimatePresence } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useNavigation } from "react-router";
+
+type MessageKey = "/app/search" | "/app/upload" | "/app" | "default";
+
+interface SpinnerMessage {
+  title: string;
+  subtitle: string;
+}
+
+const messages: Record<MessageKey, SpinnerMessage> = {
+  "/app/search": {
+    title: "Analyzing Job Fit",
+    subtitle: "Matching your profile...",
+  },
+  "/app/upload": {
+    title: "Processing CV",
+    subtitle: "Extracting key highlights...",
+  },
+  "/app": {
+    title: "Loading Dashboard",
+    subtitle: "Fetching recent activity...",
+  },
+  default: {
+    title: "Analyzing Profile",
+    subtitle: "Contextualizing Skills...",
+  },
+};
 
 export function GlobalSpinner() {
   const navigation = useNavigation();
   const isLoading = navigation.state === "loading";
+  const location = navigation.location?.pathname as MessageKey | undefined;
+
+  console.log({ location })
+
+  const currentMsg: SpinnerMessage =
+    location && messages[location] ? messages[location] : messages.default;
 
   return (
     <AnimatePresence>
@@ -61,10 +93,10 @@ export function GlobalSpinner() {
               transition={{ repeat: Infinity, duration: 1.5 }}
               className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-600"
             >
-              Analyzing Profile
+              {currentMsg.title}
             </motion.span>
             <span className="text-[9px] font-medium text-slate-400 uppercase tracking-widest">
-              Contextualizing Skills...
+              {currentMsg.subtitle}
             </span>
           </div>
         </motion.div>

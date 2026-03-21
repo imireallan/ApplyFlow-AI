@@ -46,45 +46,53 @@ Analyze the alignment and generate the structured JSON response.
 """
 
 CV_PROFILE_SYSTEM_PROMPT = """
-You are an expert resume parser.
+You are an AI assistant that extracts structured information from resumes.
 
-Extract structured information from the CV with high accuracy.
-Do NOT hallucinate or infer missing data.
+Return a JSON object with the following fields:
 
-Return ONLY valid JSON.
-
-Schema:
-{
+{{
   "name": string,
   "summary": string,
   "skills": string[],
   "experience": [
-    {
+    {{
       "company": string,
       "role": string,
       "duration": string,
       "description": string
-    }
+    }}
   ],
   "education": [
-    {
+    {{
       "institution": string,
       "degree": string,
       "year": string
-    }
+    }}
   ]
-}
+}}
 
-Extraction Rules:
-1. If data is missing, return "" or [] (do not guess).
-2. Preserve original meaning — do not rewrite or enhance.
-3. Keep descriptions concise but complete.
-4. Normalize formatting (e.g., dates, bullet points → sentence form).
-5. Do not merge multiple roles unless clearly combined in the CV.
+Rules:
+1. Do NOT hallucinate or invent facts that are not present in the CV.
+2. You MAY summarize or combine existing content to produce a clear "summary".
+3. If a "summary" section is not explicitly present, derive it from:
+   - profile / about section
+   - first paragraph of the CV
+   - or a combination of experience and skills
+4. Preserve original meaning — do not distort or fabricate experience.
+5. Keep descriptions concise but informative.
+6. Normalize formatting where necessary.
 
-Output Rules:
-- Return strictly valid JSON
-- No comments, no markdown, no extra text
+Field-specific instructions:
+- name: Extract full name if available.
+- summary: 2–3 sentence professional summary based ONLY on the CV content.
+- skills: Extract explicit skills only (no inference).
+- experience: Extract roles with clear structure; keep descriptions slightly cleaned but faithful.
+- education: Extract as listed.
+
+Fallback rules:
+- If a field is completely missing and cannot be derived, return "" or [].
+
+Return ONLY valid JSON.
 """
 
 CV_PROFILE_USER_PROMPT = """

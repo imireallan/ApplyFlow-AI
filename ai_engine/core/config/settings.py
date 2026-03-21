@@ -1,4 +1,4 @@
-from functools import lru_cache, cached_property
+from functools import cached_property, lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,7 +20,8 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 
-    PINECONE_INDEX_NAME: str = "applyflow-prod"
+    PINECONE_INDEX_NAME_DEV: str
+    PINECONE_INDEX_NAME_PROD: str
     PINECONE_API_KEY: str
 
     # Embeddings - Use "openai" or "huggingface" (free)
@@ -50,7 +51,6 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
-
     @cached_property
     def DATABASE_URL(self) -> str:
         if self.EXTERNAL_DB_URL:
@@ -66,6 +66,17 @@ class Settings(BaseSettings):
             url = f"{url}?sslmode={self.DB_SSL_MODE}"
 
         return url
+
+    @cached_property
+    def PINECONE_INDEX(self) -> str:
+        index_map = {
+            "development": self.PINECONE_INDEX_NAME_DEV,
+            "production": self.PINECONE_INDEX_NAME_PROD,
+        }
+        index_name = index_map.get(self.ENV, self.PINECONE_INDEX_NAME_PROD)
+        if not index_name:
+            raise ValueError(f"PINECONE_INDEX_NAME_{self.ENV.upper()} not configured")
+        return index_name
 
 
 @lru_cache

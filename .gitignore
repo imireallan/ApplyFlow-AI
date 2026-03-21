@@ -211,3 +211,4 @@ service-link.json
 applyflow-ec2-key.pem
 .DS_Store
 terraform/.terraform/
+.env.prod

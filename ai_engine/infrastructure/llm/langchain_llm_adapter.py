@@ -7,7 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_groq import ChatGroq
 from langchain_openai import ChatOpenAI
 
-from core.application.models.match import MatchAnalysis
+from core.application.models.match import MatchEnriched
 from core.application.ports.llm_port import LLMPort
 from core.domain.exceptions import LLMError
 from core.domain.models.cv_profile import ExtractedCVProfile
@@ -64,7 +64,7 @@ class LangChainLLMAdapter(LLMPort):
         self,
         context: str,
         job_description: str,
-    ) -> MatchAnalysis:
+    ) -> MatchEnriched:
         """
         Analyze a resume chunk against a job description.
         Returns structured JSON output.
@@ -77,10 +77,16 @@ class LangChainLLMAdapter(LLMPort):
                 }
             )
 
-            return MatchAnalysis(
+            return MatchEnriched(
+                id="",  # Filled later by service
+                content="",  # Filled later by service
                 reasoning=response.get("reasoning", ""),
                 nudge=response.get("nudge", ""),
                 match_score=response.get("match_score", 0.0),
+                highlights=response.get("highlights", []),
+                insight=response.get("insight", ""),
+                missing_skills=response.get("missing_skills", []),
+                improved_content=response.get("improved_content", ""),
             )
 
         except Exception as e:

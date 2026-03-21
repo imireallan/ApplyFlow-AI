@@ -111,7 +111,7 @@ app.include_router(cv_routes.router, prefix="/cv", tags=["CV Operations"])
 
 
 @app.exception_handler(VectorStoreError)
-async def vector_store_exception_handler(request: Request, exc: VectorStoreError):
+async def vector_store_exception_handler(request: Request, exc: VectorStoreError) -> JSONResponse:
     """
     Handle VectorStoreError exceptions.
     Logs detailed error to logging tools (e.g., Sentry) but returns

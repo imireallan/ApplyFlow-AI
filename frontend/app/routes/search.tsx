@@ -5,9 +5,8 @@ import { useNavigation, useSearchParams, useSubmit } from "react-router";
 // Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { CVContextBlock } from "~/components/CVContextBlock";
+import { MatchExplanationPanel } from "~/components/MatchExplanation";
 import { MatchList } from "~/components/MatchList";
-import { MatchReasoning } from "~/components/MatchReasoning";
-import { MatchScore } from "~/components/MatchScore";
 import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
@@ -36,16 +35,8 @@ interface ComponentProps {
   actionData?: ActionData;
 }
 
-interface CachedSearchResult {
-  // query: string;
-  cvId: string;
-  // results: CVMatch[];
-  profile: any;
-  timestamp: number;
-}
-
-export async function loader(): Promise<{ initialMatches: CVMatch[] }> {
-  return { initialMatches: [] };
+export async function loader() {
+  return null
 }
 
 export async function action({ request }: ActionArgs): Promise<ActionData> {
@@ -225,7 +216,7 @@ export default function CVSearch({ actionData }: ComponentProps) {
               </button>
             </div>
           )}
-          <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-20 sm:pb-24">
+          <div className="h-full overflow-y-auto p-4 sm:p-6 lg:p-8 pb-32 sm:pb-40">
             <div className="space-y-4 sm:space-y-6 lg:space-y-8 max-w-7xl mx-auto">
               {profile && (
                 <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 sm:gap-6">
@@ -247,18 +238,28 @@ export default function CVSearch({ actionData }: ComponentProps) {
                     initial={{ opacity: 0, x: 10 }}
                     animate={{ opacity: 1, x: 0 }}
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-12 gap-4 sm:gap-6">
-                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-12 gap-4 sm:gap-6">
+                      {/* <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
                         <MatchScore score={selectedMatch.match_score} />
+                      </div> */}
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                        {/* <MatchReasoning reasoning={selectedMatch.reasoning} /> */}
+                        <MatchExplanationPanel
+                          score={selectedMatch.match_score}
+                          reasoning={selectedMatch.reasoning}
+                        />
                       </div>
                       <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
-                        <MatchReasoning reasoning={selectedMatch.reasoning} />
-                      </div>
-                      <div className="col-span-full">
                         <NudgeCard nudge={selectedMatch.nudge} />
                       </div>
-                      <div className="col-span-full">
-                        <CVContextBlock content={selectedMatch.content} />
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                        <CVContextBlock
+                          content={selectedMatch.content}
+                          highlights={selectedMatch.highlights}
+                          insight={selectedMatch.insight}
+                          missingSkills={selectedMatch.missing_skills}
+                          improvedContent={selectedMatch.improved_content}
+                        />
                       </div>
                     </div>
                   </motion.div>

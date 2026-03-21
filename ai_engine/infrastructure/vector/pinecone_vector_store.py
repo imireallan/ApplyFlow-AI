@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from langchain_core.embeddings import Embeddings
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -29,7 +29,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
 
             dimension = 384
 
-            index_name = settings.PINECONE_INDEX_NAME
+            index_name = settings.PINECONE_INDEX
 
             if index_name not in [i.name for i in pc.list_indexes()]:
 
@@ -55,10 +55,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
             ) from e
 
     def upsert(
-        self,
-        vector_id: str,
-        content: str,
-        user_id: str,
+        self, vector_id: str, content: str, user_id: str, cv_id: str
     ) -> dict[str, Any]:
 
         try:
@@ -72,6 +69,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                         "metadata": {
                             "content": content,
                             "user_id": user_id,
+                            "cv_id": cv_id,
                         },
                     }
                 ],
@@ -123,17 +121,23 @@ class PineconeVectorStoreAdapter(VectorStorePort):
         query: str,
         user_id: str,
         k: int,
+        cv_id: Optional[str] = None,
     ) -> list[MatchSimilarityScore]:
 
         try:
             vector = self.embeddings.embed_query(query)
 
-            result = self.index.query(
-                vector=vector,
-                top_k=k,
-                namespace=user_id,
-                include_metadata=True,
-            )
+            query_args: dict[str, Any] = {
+                "vector": vector,
+                "top_k": k,
+                "namespace": user_id,
+                "include_metadata": True,
+            }
+
+            if cv_id:
+                query_args["filter"] = {"cv_id": {"$eq": cv_id}}
+
+            result = self.index.query(**query_args)
 
             matches: list[MatchSimilarityScore] = []
 

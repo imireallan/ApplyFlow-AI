@@ -1,15 +1,16 @@
 import { GoogleLogin } from "@react-oauth/google";
-import { ApplyFlowLogo } from "~/components/Logo";
-import { motion, AnimatePresence } from "motion/react";
-import { login } from "~/.server/auth";
-import type { Route } from "./+types/login";
+import { AnimatePresence, motion } from "motion/react";
 import {
-  useSubmit,
-  useNavigation,
-  useActionData,
+  Link,
   redirect,
+  useActionData,
+  useNavigation,
+  useSubmit,
 } from "react-router";
+import { login } from "~/.server/auth";
 import { getUserToken } from "~/.server/sessions";
+import { ApplyFlowLogo } from "~/components/Logo";
+import type { Route } from "./+types/login";
 
 export const loader = async ({ request }: Route.ActionArgs) => {
   const token = await getUserToken(request);
@@ -52,10 +53,12 @@ export default function LoginPage() {
 
       {/* Header */}
       <header className="relative z-10 flex items-center justify-between px-6 h-16 border-b border-slate-100/50 dark:border-slate-800/50 backdrop-blur-sm">
-        <ApplyFlowLogo />
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">
-          AI-Powered
-        </span>
+        <Link to="/">
+          <ApplyFlowLogo />
+          <span className="text-xs font-medium text-slate-400 uppercase tracking-widest">
+            AI-Powered
+          </span>
+        </Link>
       </header>
 
       {/* Main Content */}

@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 
-from core.application.models.match import MatchAnalysis
+from core.application.models.match import MatchEnriched
 from core.domain.models.cv_profile import CVProfile, ExtractedCVProfile
 
 
 class LLMPort(ABC):
 
     @abstractmethod
-    def analyze_match(self, context: str, job_description: str) -> MatchAnalysis:
+    def analyze_match(self, context: str, job_description: str) -> MatchEnriched:
         pass
 
     @abstractmethod

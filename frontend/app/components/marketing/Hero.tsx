@@ -82,9 +82,9 @@ export function Hero() {
             Start Now - It's Free
           </Button>
 
-          <Button variant="outline" className="w-full sm:w-auto">
+          {/* <Button variant="outline" className="w-full sm:w-auto">
             See How It Works
-          </Button>
+          </Button> */}
         </div>
       </div>
 

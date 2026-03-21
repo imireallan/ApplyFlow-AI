@@ -12,4 +12,8 @@ export interface CVMatch {
   match_score: number;
   reasoning: string;
   nudge: string;
+  highlights?: string[];
+  insight?: string;
+  missing_skills?: string[];
+  improved_content?: string;
 }

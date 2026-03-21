@@ -1,7 +1,6 @@
-from typing import Optional
 from uuid import UUID
 
-from core.application.models.match import MatchAnalysisResult
+from core.application.models.match import MatchEnriched
 from core.application.ports.llm_port import LLMPort
 from core.application.ports.vector_store_port import VectorStorePort
 from core.domain.models.cv_profile import CVProfile
@@ -65,36 +64,29 @@ class JobApplicationService:
         job_description: str,
         top_k: int,
         user_id: str,
-        cv_id: Optional[str] = None,
-    ) -> list[MatchAnalysisResult]:
+        cv_id: str,
+    ) -> tuple[list[MatchEnriched], CVProfile | None]:
         cv_id_uuid = UUID(cv_id)
 
-        # Fetch user's CV profile (optional, enriches analysis)
-        profile = self.profile_repository.get_by_user_id(cv_id_uuid)
+        profile = self.profile_repository.get_by_cv_id(cv_id_uuid)
 
+        profile_context = self._build_profile_context(profile) if profile else ""
+
+        # Query the Vector Store with PRE-FILTERING
+        # This ensures we get exactly top_k results for THIS specific CV
         matches = self.vector_store.query(
-            job_description,
-            k=top_k,
+            query=job_description,
             user_id=user_id,
+            k=top_k,
+            cv_id=cv_id,  # Filter happens inside Pinecone/Vector DB
         )
 
-        # Filter by specific CV if provided
-        if cv_id:
-            try:
-                cv_embeddings = self.cv_embedding_repo.list_by_cv(UUID(cv_id))
-                cv_vector_ids = {e.vector_id for e in cv_embeddings}
-                matches = [m for m in matches if m.id in cv_vector_ids]
-            except ValueError:
-                # Invalid UUID
-                matches = []
-
-        enriched: list[MatchAnalysisResult] = []
+        enriched: list[MatchEnriched] = []
 
         for match in matches:
-            # Include profile context if available
+            # 4. Construct the LLM Context
             context = match.content
-            if profile:
-                profile_context = self._build_profile_context(profile)
+            if profile_context:
                 context = f"""
                     {profile_context}
 
@@ -103,19 +95,24 @@ class JobApplicationService:
                     {context}
                 """
 
+            # 5. AI Analysis
             analysis = self.llm.analyze_match(
                 context=context,
                 job_description=job_description,
             )
 
             enriched.append(
-                MatchAnalysisResult(
+                MatchEnriched(
                     id=match.id,
                     content=match.content,
                     match_score=analysis.match_score,
                     reasoning=analysis.reasoning,
                     nudge=analysis.nudge,
+                    highlights=analysis.highlights,
+                    insight=analysis.insight,
+                    missing_skills=analysis.missing_skills,
+                    improved_content=analysis.improved_content,
                 )
             )
 
-        return enriched
+        return (enriched, profile)

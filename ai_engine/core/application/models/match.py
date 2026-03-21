@@ -21,5 +21,12 @@ class MatchAnalysisResult(Match, MatchAnalysis):
     pass
 
 
+class MatchEnriched(MatchAnalysisResult):
+    highlights: list[str]
+    insight: str
+    missing_skills: list[str]
+    improved_content: str
+
+
 class MatchSimilarityScore(Match):
     metadata: dict[str, Any]

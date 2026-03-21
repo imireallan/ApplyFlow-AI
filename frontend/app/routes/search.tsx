@@ -30,49 +30,13 @@ interface ActionData {
   fromCache?: boolean;
   cvId?: string;
 }
-interface LoaderData {
-  results?: CVMatch[];
-  profile?: any;
-  // query?: string;
-  // error?: {
-  //   title: string;
-  //   message: string;
-  // };
-  // fromCache?: boolean;
-  // cvId?: string;
-}
 
 interface ComponentProps {
   actionData?: ActionData;
-  loaderData?: LoaderData;
 }
 
 export async function loader() {
-  // return { initialMatches: [] };
-  return {
-    results: [
-      {
-        id: "1",
-        match_score: 0.9,
-        reasoning:
-          "Strong alignment with backend experience, especially Django and API design.",
-        nudge:
-          "Consider adding more detail on testing and system design experience.",
-
-        content:
-          "Designed and implemented RESTful APIs that improved data access efficiency by 20%. Applied advanced query optimization techniques within Django ORM, achieving a 30% reduction in database response times.",
-
-        // NEW MOCK DATA
-        highlights: ["RESTful APIs", "Django ORM", "query optimization"],
-        insight:
-          "This section demonstrates strong backend experience and directly matches key job requirements like Django and API development.",
-        missing_skills: ["pytest", "API security", "Docker"],
-        improved_content:
-          "Designed and implemented scalable RESTful APIs using Django, improving data access efficiency by 20%. Optimized database queries within Django ORM, reducing response times by 30% and enhancing overall system performance.",
-      },
-    ],
-    profile: null,
-  };
+  return null
 }
 
 export async function action({ request }: ActionArgs): Promise<ActionData> {
@@ -121,7 +85,7 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
   };
 }
 
-export default function CVSearch({ actionData, loaderData }: ComponentProps) {
+export default function CVSearch({ actionData }: ComponentProps) {
   const submit = useSubmit();
   const navigation = useNavigation();
   const isSearching = navigation.state === "submitting";
@@ -171,7 +135,7 @@ export default function CVSearch({ actionData, loaderData }: ComponentProps) {
     }
   }, [actionData, selectedCvId, isClient, getCacheKey]);
 
-  const results = loaderData?.results || actionData?.results;
+  const results = actionData?.results;
   const profile: any = actionData?.profile || cachedProfile;
   const [selectedMatch, setSelectedMatch] = useState<CVMatch | null>(null);
 

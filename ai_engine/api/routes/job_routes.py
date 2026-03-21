@@ -19,15 +19,13 @@ async def process_job(
 ) -> JobResponse:
     try:
         # Get enriched matches
-        matches = service.process_job_application(
+        (matches, profile) = service.process_job_application(
             job_description=payload.job_description,
             top_k=payload.top_k,
             user_id=str(current_user.id),
             cv_id=payload.cv_id,
         )
 
-        # Get user's profile
-        profile = profile_service.get_profile_by_user_id(current_user.id)
         profile_data = None
         if profile:
             profile_data = UserProfile(
@@ -46,6 +44,10 @@ async def process_job(
                     match_score=m.match_score,
                     reasoning=m.reasoning,
                     nudge=m.nudge,
+                    highlights=m.highlights,
+                    insight=m.insight,
+                    missing_skills=m.missing_skills,
+                    improved_content=m.improved_content,
                 )
                 for m in matches
             ],

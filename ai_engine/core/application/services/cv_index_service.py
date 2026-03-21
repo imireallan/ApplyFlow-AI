@@ -58,6 +58,7 @@ class CVIndexService:
                 vector_id=vector_id,
                 content=chunk,
                 user_id=str(cv.user_id),
+                cv_id=str(cv.id)
             )
 
             embedding = CVEmbedding(

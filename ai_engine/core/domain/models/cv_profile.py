@@ -15,10 +15,11 @@ class CVProfile(BaseModel):
     education: list[Any]
     cv_id: UUID | None = None
 
+
 @dataclass
 class ExtractedCVProfile:
     name: str
     summary: str
     skills: list[str]
-    experience: list[Any]
-    education: list[Any]
+    experience: list[dict[str, Any]]
+    education: list[dict[str, Any]]

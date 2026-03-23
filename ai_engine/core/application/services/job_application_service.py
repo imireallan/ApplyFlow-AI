@@ -1,6 +1,7 @@
+import asyncio
 from uuid import UUID
 
-from core.application.models.match import MatchEnriched
+from core.application.models.match import MatchEnriched, MatchSimilarityScore
 from core.application.ports.llm_port import LLMPort
 from core.application.ports.vector_store_port import VectorStorePort
 from core.domain.models.cv_profile import CVProfile
@@ -59,48 +60,56 @@ class JobApplicationService:
                 -------------------------
             """
 
-    def process_job_application(
+    async def process_job_application(
         self,
         job_description: str,
         top_k: int,
         user_id: str,
         cv_id: str,
     ) -> tuple[list[MatchEnriched], CVProfile | None]:
+
         cv_id_uuid = UUID(cv_id)
 
         profile = self.profile_repository.get_by_cv_id(cv_id_uuid)
-
         profile_context = self._build_profile_context(profile) if profile else ""
 
-        # Query the Vector Store with PRE-FILTERING
-        # This ensures we get exactly top_k results for THIS specific CV
         matches = self.vector_store.query(
             query=job_description,
             user_id=user_id,
             k=top_k,
-            cv_id=cv_id,  # Filter happens inside Pinecone/Vector DB
+            cv_id=cv_id,
         )
 
-        enriched: list[MatchEnriched] = []
-
+        contexts: list[tuple[MatchSimilarityScore, str]] = []
         for match in matches:
-            # 4. Construct the LLM Context
             context = match.content
+
             if profile_context:
                 context = f"""
-                    {profile_context}
+                {profile_context}
 
-                    CV SECTION
-                    ----------
-                    {context}
+                CV SECTION
+                ----------
+                {context}
                 """
 
-            # 5. AI Analysis
-            analysis = self.llm.analyze_match(
+            contexts.append((match, context))
+
+        # 3. Run LLM calls in parallel
+        tasks = [
+            self.llm.analyze_match(
                 context=context,
                 job_description=job_description,
             )
+            for (_, context) in contexts
+        ]
 
+        analyses = await asyncio.gather(*tasks)
+
+        # 4. Merge results
+        enriched: list[MatchEnriched] = []
+
+        for (match, _), analysis in zip(contexts, analyses):
             enriched.append(
                 MatchEnriched(
                     id=match.id,

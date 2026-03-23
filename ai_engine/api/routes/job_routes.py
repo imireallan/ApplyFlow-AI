@@ -19,7 +19,7 @@ async def process_job(
 ) -> JobResponse:
     try:
         # Get enriched matches
-        (matches, profile) = service.process_job_application(
+        (matches, profile) = await service.process_job_application(
             job_description=payload.job_description,
             top_k=payload.top_k,
             user_id=str(current_user.id),

@@ -7,6 +7,7 @@ from core.application.services.cv_index_service import CVIndexService
 from core.application.services.cv_profile_service import CVProfileService
 from core.application.services.cv_query_service import CVQueryService
 from core.application.services.job_application_service import JobApplicationService
+from core.container import container
 from core.domain.repositories.cv_embedding_repository import CVEmbeddingRepository
 from core.domain.repositories.cv_profile_repository import CVProfileRepository
 from core.domain.repositories.cv_repository import CVRepository
@@ -20,16 +21,18 @@ from infrastructure.db.repositories.cv_respository_sqlalchemy import (
     SQLAlchemyCVRepository,
 )
 from infrastructure.db.session import get_db
-from infrastructure.llm.langchain_llm_adapter import LangChainLLMAdapter
-from infrastructure.vector.pinecone_vector_store import PineconeVectorStoreAdapter
 
 
 def get_llm() -> LLMPort:
-    return LangChainLLMAdapter()
+    if container.llm is None:
+        raise RuntimeError("LLm not initialized")
+    return container.llm
 
 
 def get_vector_store() -> VectorStorePort:
-    return PineconeVectorStoreAdapter()
+    if container.vector_store is None:
+        raise RuntimeError("Vector store not initialized")
+    return container.vector_store
 
 
 def get_cv_repository(

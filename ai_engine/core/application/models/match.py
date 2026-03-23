@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
@@ -22,10 +22,10 @@ class MatchAnalysisResult(Match, MatchAnalysis):
 
 
 class MatchEnriched(MatchAnalysisResult):
-    highlights: list[str]
-    insight: str
-    missing_skills: list[str]
-    improved_content: str
+    highlights: Optional[list[str]] = None
+    insight: Optional[str] = None
+    missing_skills: Optional[list[str]] = None
+    improved_content: Optional[str] = None
 
 
 class MatchSimilarityScore(Match):

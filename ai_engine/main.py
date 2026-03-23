@@ -9,9 +9,19 @@ from sqlalchemy import text
 from api.exception_handlers import VectorStoreError
 from api.routes import auth_routes, cv_routes, job_routes
 from core.config.settings import settings
+from core.container import container
 from core.database import engine
+from core.middleware.timing import timing_middleware
+from infrastructure.llm.langchain_llm_adapter import LangChainLLMAdapter
+from infrastructure.vector.pinecone_vector_store import PineconeVectorStoreAdapter
 
-# Set up logger
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+)
+logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 
@@ -76,7 +86,7 @@ def check_migration_status() -> bool:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):  # type: ignore
+async def lifespan(app: FastAPI):
     print("🚀 Starting ApplyFlow AI Engine")
 
     try:
@@ -87,7 +97,21 @@ async def lifespan(app: FastAPI):  # type: ignore
         print("❌ Database Connection Failed:", e)
         raise e
 
-    # Check migration status (but don't run migrations)
+    try:
+        container.vector_store = PineconeVectorStoreAdapter()
+        print("✅ Vector Store Initialized")
+    except Exception as e:
+        print("❌ Vector Store Initialization Failed:", e)
+        raise e
+
+    try:
+        container.llm = LangChainLLMAdapter()
+        print("✅ LLM Initialized")
+    except Exception as e:
+        print("❌ LLM Initialization Failed:", e)
+        raise e
+
+    # Check migration status
     check_migration_status()
 
     yield
@@ -96,6 +120,8 @@ async def lifespan(app: FastAPI):  # type: ignore
 
 
 app = FastAPI(title="ApplyFlow AI Engine", root_path="/api", lifespan=lifespan)
+
+app.middleware("http")(timing_middleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -111,7 +137,9 @@ app.include_router(cv_routes.router, prefix="/cv", tags=["CV Operations"])
 
 
 @app.exception_handler(VectorStoreError)
-async def vector_store_exception_handler(request: Request, exc: VectorStoreError) -> JSONResponse:
+async def vector_store_exception_handler(
+    request: Request, exc: VectorStoreError
+) -> JSONResponse:
     """
     Handle VectorStoreError exceptions.
     Logs detailed error to logging tools (e.g., Sentry) but returns

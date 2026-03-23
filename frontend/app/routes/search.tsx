@@ -242,17 +242,17 @@ export default function CVSearch({ actionData }: ComponentProps) {
                       {/* <div className="md:col-span-2 lg:col-span-4 xl:col-span-4">
                         <MatchScore score={selectedMatch.match_score} />
                       </div> */}
-                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-full">
                         {/* <MatchReasoning reasoning={selectedMatch.reasoning} /> */}
                         <MatchExplanationPanel
                           score={selectedMatch.match_score}
                           reasoning={selectedMatch.reasoning}
                         />
                       </div>
-                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-full">
                         <NudgeCard nudge={selectedMatch.nudge} />
                       </div>
-                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-8">
+                      <div className="md:col-span-2 lg:col-span-4 xl:col-span-full">
                         <CVContextBlock
                           content={selectedMatch.content}
                           highlights={selectedMatch.highlights}

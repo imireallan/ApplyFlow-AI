@@ -7,7 +7,7 @@ from core.domain.models.cv_profile import CVProfile, ExtractedCVProfile
 class LLMPort(ABC):
 
     @abstractmethod
-    def analyze_match(self, context: str, job_description: str) -> MatchEnriched:
+    async def analyze_match(self, context: str, job_description: str) -> MatchEnriched:
         pass
 
     @abstractmethod

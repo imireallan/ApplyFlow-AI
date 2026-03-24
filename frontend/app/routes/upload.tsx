@@ -1,4 +1,4 @@
-import { redirect } from "react-router";
+import { redirect, useNavigation, useSubmit } from "react-router";
 // Request type inferred from Remix
 import { apiRequestHandler } from "~/.server/apiRequestHandler";
 import { UploadForm } from "~/components/UploadForm";
@@ -32,11 +32,12 @@ export async function action({ request }: ActionArgs) {
     const apiData = new FormData();
     apiData.append("file", file);
 
-    const indexResponse = (await apiRequestHandler(request, {
-      endpoint: "/cv/index-cv",
-      method: "POST",
-      body: apiData,
-    })) as any;
+    // const indexResponse = (await apiRequestHandler(request, {
+    //   endpoint: "/cv/index-cv",
+    //   method: "POST",
+    //   body: apiData,
+    // })) as any;
+    const indexResponse = {}
 
     const getErrorMessage = async (res: any) =>
       res instanceof Response
@@ -68,6 +69,8 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function UploadPage({ actionData }: ComponentProps) {
+  const submit = useSubmit();
+  const navigation = useNavigation();
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-8 lg:p-12">
       <div className="text-center max-w-sm w-full">
@@ -79,7 +82,11 @@ export default function UploadPage({ actionData }: ComponentProps) {
         </p>
       </div>
       <div className="w-full max-w-sm">
-        <UploadForm error={actionData?.error} />
+        <UploadForm
+          error={actionData?.error}
+          submit={submit}
+          navigation={navigation}
+        />
       </div>
     </div>
   );

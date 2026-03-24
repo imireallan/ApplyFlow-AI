@@ -1,14 +1,20 @@
-import { Loader2, Upload, CheckCircle2, X, AlertCircle } from "lucide-react";
+import { AlertCircle, CheckCircle2, Loader2, Upload, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
-import { useSubmit, useNavigation, Form } from "react-router";
+import { Form, type Navigation, type SubmitFunction } from "react-router";
 import { Button } from "./Button";
 import { ScanningLine } from "./ScanningLine";
 
-export function UploadForm({ error }: { error?: string }) {
-  const submit = useSubmit();
-  const navigation = useNavigation();
+export function UploadForm({
+  error,
+  submit,
+  navigation,
+}: {
+  error?: string;
+  submit: SubmitFunction;
+  navigation: Navigation;
+}) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   // The scanner only runs when the specific "upload-cv" intent is active
@@ -41,7 +47,7 @@ export function UploadForm({ error }: { error?: string }) {
   };
 
   return (
-    <div className="w-full max-w-md bg-white p-10 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden">
+    <div className="w-full max-w-md bg-white p-10 mt-2 rounded-[2.5rem] shadow-sm border border-gray-100 relative overflow-hidden">
       {/* 1. Processing Overlay: Triggered by useNavigation */}
       <AnimatePresence>
         {isProcessing && (
@@ -63,12 +69,6 @@ export function UploadForm({ error }: { error?: string }) {
         )}
       </AnimatePresence>
 
-      <div className="text-center mb-8">
-        <h2 className="text-2xl font-black text-blue-600 tracking-tight italic">
-          Upload Your Resume
-        </h2>
-      </div>
-
       <Form method="post" onSubmit={handleManualSubmit} className="space-y-6">
         <div
           {...getRootProps()}
@@ -76,7 +76,7 @@ export function UploadForm({ error }: { error?: string }) {
             ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-400"}
             ${error ? "border-red-200 bg-red-50/30" : ""}`}
         >
-          <input {...getInputProps()} />
+          <input {...getInputProps()} data-testid="file-input"/>
 
           <AnimatePresence mode="wait">
             {!selectedFile ? (

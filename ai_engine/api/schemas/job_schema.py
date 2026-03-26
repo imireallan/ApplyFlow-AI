@@ -28,7 +28,11 @@ class UserProfile(BaseModel):
     education: List[Any]
 
 
-class JobResponse(BaseModel):
-    status: str
-    data: List[JobMatch]
+class Job(BaseModel):
+    match: list[JobMatch]
     profile: Optional[UserProfile] = None
+
+
+class JobResponse(BaseModel):
+    status: str = "success"
+    data: Job

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from api.dependencies.cv import get_cv_profile_service, get_job_application_service
 from api.exception_handlers import VectorStoreError
-from api.schemas.job_schema import JobMatch, JobRequest, JobResponse, UserProfile
+from api.schemas.job_schema import Job, JobMatch, JobRequest, JobResponse, UserProfile
 from core.application.services.cv_profile_service import CVProfileService
 from core.application.services.job_application_service import JobApplicationService
 from core.security.dependencies import CurrentUser
@@ -34,24 +34,24 @@ async def process_job(
                 experience=profile.experience,
                 education=profile.education,
             )
-
         return JobResponse(
-            status="success",
-            data=[
-                JobMatch(
-                    id=m.id,
-                    content=m.content,
-                    match_score=m.match_score,
-                    reasoning=m.reasoning,
-                    nudge=m.nudge,
-                    highlights=m.highlights,
-                    insight=m.insight,
-                    missing_skills=m.missing_skills,
-                    improved_content=m.improved_content,
-                )
-                for m in matches
-            ],
-            profile=profile_data,
+            data=Job(
+                profile=profile_data,
+                match=[
+                    JobMatch(
+                        id=m.id,
+                        content=m.content,
+                        match_score=m.match_score,
+                        reasoning=m.reasoning,
+                        nudge=m.nudge,
+                        highlights=m.highlights,
+                        insight=m.insight,
+                        missing_skills=m.missing_skills,
+                        improved_content=m.improved_content,
+                    )
+                    for m in matches
+                ],
+            )
         )
 
     except VectorStoreError as e:

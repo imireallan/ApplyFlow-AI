@@ -12,6 +12,11 @@ class InvalidFileTypeError(HTTPException):
     ):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
+class MissingCVIdError(HTTPException):
+    def __init__(
+        self, detail: str = "Missing CV Id"
+    ):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
 
 class VectorStoreError(HTTPException):
     def __init__(

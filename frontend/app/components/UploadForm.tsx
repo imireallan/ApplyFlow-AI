@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Form, type Navigation, type SubmitFunction } from "react-router";
 import { Button } from "./Button";
+import { ErrorComponent } from "./Error";
 import { ScanningLine } from "./ScanningLine";
 
 export function UploadForm({
@@ -11,7 +12,10 @@ export function UploadForm({
   submit,
   navigation,
 }: {
-  error?: string;
+  error?: {
+    title: string;
+    message: string;
+  };
   submit: SubmitFunction;
   navigation: Navigation;
 }) {
@@ -76,7 +80,7 @@ export function UploadForm({
             ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-200 hover:border-blue-400"}
             ${error ? "border-red-200 bg-red-50/30" : ""}`}
         >
-          <input {...getInputProps()} data-testid="file-input"/>
+          <input {...getInputProps()} data-testid="file-input" />
 
           <AnimatePresence mode="wait">
             {!selectedFile ? (
@@ -139,18 +143,9 @@ export function UploadForm({
         </div>
 
         {/* Dynamic Error Feedback from ActionData */}
-        <AnimatePresence>
-          {error && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              className="flex items-start gap-2 p-3 bg-red-50 text-red-600 rounded-xl border border-red-100"
-            >
-              <AlertCircle size={16} className="shrink-0 mt-0.5" />
-              <p className="text-xs font-bold leading-tight">{error}</p>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {error && (
+          <ErrorComponent title={error.title} message={error.message} />
+        )}
 
         <Button
           type="submit"

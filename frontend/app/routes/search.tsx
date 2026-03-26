@@ -1,9 +1,9 @@
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigation, useSearchParams, useSubmit } from "react-router";
+import { data, useNavigation, useSearchParams, useSubmit } from "react-router";
 // Request type inferred from Remix
-import { apiRequestHandler } from "~/.server/apiRequestHandler";
+import { processJobHandler } from "~/.server/job";
 import { CVContextBlock } from "~/components/CVContextBlock";
 import { MatchExplanationPanel } from "~/components/MatchExplanation";
 import { MatchList } from "~/components/MatchList";
@@ -11,13 +11,11 @@ import { NudgeCard } from "~/components/NudgeCard";
 import { PageWrapper } from "~/components/PageWrapper";
 import { ProfileHighlights } from "~/components/ProfileHighlights";
 import { SearchForm } from "~/components/SearchForm";
+import { formatApiError } from "~/helpers/apiError";
 import { loadFromCache, saveToCache } from "~/helpers/lruCache";
 import { cn } from "~/helpers/utils";
 import type { CVMatch } from "~/types/ai";
-
-interface ActionArgs {
-  request: Request;
-}
+import type { Route } from "./+types/search";
 
 interface ActionData {
   results?: CVMatch[];
@@ -36,15 +34,14 @@ interface ComponentProps {
 }
 
 export async function loader() {
-  return null
+  return null;
 }
 
-export async function action({ request }: ActionArgs): Promise<ActionData> {
+export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
   const url = new URL(request.url);
 
   const cvId = url.searchParams.get("cv_id")?.trim();
-
   const query = formData.get("job_description")?.toString().trim() ?? "";
 
   if (!cvId) {
@@ -57,31 +54,27 @@ export async function action({ request }: ActionArgs): Promise<ActionData> {
     };
   }
 
-  const result = await apiRequestHandler(request, {
-    endpoint: "/job/process",
-    method: "POST",
-    body: { job_description: query, top_k: 5, cv_id: cvId },
+  const res = await processJobHandler(request, {
+    job_description: query,
+    cv_id: cvId,
   });
 
-  const resultData = result as any;
-  if (resultData?.errors || resultData?.error) {
-    return {
-      results: [],
-      profile: null,
-      query,
-      error: {
-        title: "Analysis Failed",
-        message: resultData?.error || "Error processing request.",
+  if (!res.ok) {
+    return data(
+      {
+        error: formatApiError(res.data, "Analysis Failed"),
       },
-    };
+      { status: res.status },
+    );
   }
 
-  const responseData = resultData?.data;
+  const payload = res.data;
+
   return {
-    results: responseData?.data ?? [],
-    profile: responseData?.profile ?? null,
+    results: payload.match,
+    profile: payload.profile,
     query,
-    cvId, // Return the ID used to keep the UI in sync
+    cvId,
   };
 }
 

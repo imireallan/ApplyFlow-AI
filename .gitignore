@@ -212,3 +212,16 @@ applyflow-ec2-key.pem
 .DS_Store
 terraform/.terraform/
 .env.prod
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+playwright/.auth/
+test-results/
+playwright-report/
+test-results.json
+coverage

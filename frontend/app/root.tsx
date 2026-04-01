@@ -21,54 +21,41 @@ import { GlobalSpinner } from "./components/GlobalSpinner";
 
 import { posthogMiddleware } from "./helpers/posthog-middleware";
 
-export const middleware: Route.MiddlewareFunction[] = [
-  posthogMiddleware,
-  // other middlewares...
-];
+export const middleware: Route.MiddlewareFunction[] = [posthogMiddleware];
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
-  // Get the pathname to check if it's a protected route
   const url = new URL(request.url);
-  const pathname = url.pathname;
+  const { pathname } = url;
 
-  // List of protected routes that require authentication
-  const protectedRoutes = ["/app"];
-
-  // Check if the user is trying to access a protected route
-  const isProtectedRoute = protectedRoutes.some(
-    (route) => pathname === route || pathname.startsWith(route + "/"),
-  );
+  const isProtectedRoute = pathname.startsWith("/app");
 
   let user = null;
 
   if (isProtectedRoute) {
-    // Check if user has a valid token
     const token = getAccessToken(request);
 
-    if (!token) {
-      // Redirect to login with return URL
+    if (!token || isTokenExpired(token)) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirectTo", pathname);
-      throw redirect(loginUrl.toString());
+
+      const headers = token
+        ? { "Set-Cookie": `access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;` as string }
+        : undefined;
+
+      throw redirect(loginUrl.toString(), headers ? { headers } : {});
     }
 
-    // Also check if the token is expired
-    if (isTokenExpired(token)) {
-      // Token expired - clear it and redirect to login
+    user = await getUserFromRequest(request);
+
+    if (!user) {
       const loginUrl = new URL("/login", request.url);
       loginUrl.searchParams.set("redirectTo", pathname);
+
       throw redirect(loginUrl.toString(), {
         headers: {
-          // Clear the expired cookie
           "Set-Cookie": `access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;`,
         },
       });
-    }
-
-    // Fetch user data for protected routes (cached at root level)
-    const userResponse = await getUserFromRequest(request);
-    if (userResponse) {
-      user = userResponse.data;
     }
   }
 

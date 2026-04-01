@@ -7,23 +7,37 @@ import {
   useNavigation,
   useSubmit,
 } from "react-router";
-import { login } from "~/.server/auth";
-import { getUserToken } from "~/.server/sessions";
+import { login } from "~/.server/login";
+import { getUserToken, isTokenExpired } from "~/.server/sessions";
 import { ApplyFlowLogo } from "~/components/Logo";
 import type { Route } from "./+types/login";
 
-export const loader = async ({ request }: Route.ActionArgs) => {
-  const token = await getUserToken(request);
-  if (token) {
-    return redirect("/app");
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  const url = new URL(request.url);
+  const redirectTo = url.searchParams.get("redirectTo") || "/app";
+
+  const token = getUserToken(request);
+
+  // 1. If active session exists, bypass login and go to the destination
+  if (token && !isTokenExpired(token)) {
+    return redirect(redirectTo);
   }
+
+  // 2. If no session, stay on login.
+  // The client-side component will use 'redirectTo' from the URL for the Action.
   return null;
 };
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const formData = await request.formData();
   const credential = formData.get("credential");
-  return await login(request, credential);
+
+  // Extract redirectTo from the URL
+  const url = new URL(request.url);
+  const redirectTo = url.searchParams.get("redirectTo") || "/app";
+
+  // Pass redirectTo to your login function so it knows where to send the user
+  return await login(request, credential, redirectTo);
 };
 
 export default function LoginPage() {
@@ -158,6 +172,18 @@ export default function LoginPage() {
                 transition={{ delay: 0.6 }}
                 className="relative"
               >
+                {/* Only show this in test environments */}
+                {process.env.NODE_ENV === "development" && (
+                  <button
+                    data-testid="mock-login-button"
+                    onClick={() =>
+                      handleSuccess({ credential: "mock-google-token" })
+                    }
+                    className="mt-4 text-xs text-slate-400 underline"
+                  >
+                    Debug: Mock Login
+                  </button>
+                )}
                 <AnimatePresence mode="wait">
                   {isSubmitting ? (
                     <motion.div
@@ -171,18 +197,6 @@ export default function LoginPage() {
                     </motion.div>
                   ) : (
                     <GoogleLogin
-                      // onSuccess={async (credentialResponse) => {
-                      //   await fetch(`http://localhost:8000/auth/google`, {
-                      //     method: "POST",
-                      //     headers: { "Content-Type": "application/json" },
-                      //     credentials: "include", // 🔥 REQUIRED
-                      //     body: JSON.stringify({
-                      //       id_token: credentialResponse.credential,
-                      //     }),
-                      //   });
-
-                      //   navigate("/app");
-                      // }}
                       onSuccess={(credentialResponse) =>
                         handleSuccess(credentialResponse)
                       }
@@ -199,7 +213,9 @@ export default function LoginPage() {
                     />
                   )}
                   {actionData?.error && (
-                    <div className="text-red-500 mt-4">{actionData.error}</div>
+                    <div className="text-red-500 mt-4">
+                      {actionData?.error?.message}
+                    </div>
                   )}
                 </AnimatePresence>
               </motion.div>

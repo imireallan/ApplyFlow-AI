@@ -6,3 +6,10 @@ export interface User {
   last_name?: string;
   picture_url?: string;
 }
+
+export interface UserProfile {
+  summary: string;
+  skills: string[];
+  experience: any[];
+  education: any[];
+}

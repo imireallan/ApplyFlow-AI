@@ -13,6 +13,7 @@ import {
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import {
+  data,
   Form,
   Link,
   NavLink,
@@ -20,61 +21,54 @@ import {
   useOutletContext,
   useSearchParams,
 } from "react-router";
-import { apiRequestHandler } from "~/.server/apiRequestHandler";
-import { logout } from "~/.server/auth";
+import { getUserCVsHandler } from "~/.server/cv";
+import { logout } from "~/.server/logout";
+import { requireUser } from "~/.server/sessions";
 import { AnimatedOutlet } from "~/components/AnimatedOutlet";
 import { Svg } from "~/components/SvgLogo";
 import { UserAvatar } from "~/components/UserAvatar";
-import type { UserCV } from "~/types/cv";
+import { formatApiError } from "~/helpers/apiError";
+import type { CV } from "~/types/cv";
 import type { User } from "~/types/user";
-
-interface LoaderArgs {
-  request: Request;
-}
+import type { Route } from "./+types/dashboard_layout";
 
 interface LoaderData {
   success: boolean;
-  cvs: UserCV[];
+  cvs: CV[];
 }
 
 interface ComponentProps {
   loaderData: LoaderData;
 }
 
-export const loader = async ({ request }: LoaderArgs): Promise<LoaderData> => {
-  const result = (await apiRequestHandler(request, {
-    endpoint: "/cv/user-cvs",
-    method: "GET",
-  })) as any;
+export const loader = async ({ request }: Route.LoaderArgs) => {
+  await requireUser(request);
 
-  const cvs = (result as any)?.data?.data || ([] as UserCV[]);
+  const res = await getUserCVsHandler(request);
 
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-
-  const requiresCvRoutes = ["/app/search"];
-
-  const requiresCv = requiresCvRoutes.some((route) =>
-    pathname.startsWith(route),
-  );
-
-  if (cvs.length === 0 && requiresCv) {
-    throw redirect(`/app?redirectTo=${encodeURIComponent(pathname)}`);
+  if (!res.ok) {
+    if (res.status === 401) throw redirect("/login");
+    return data(
+      {
+        error: formatApiError(res.data, "CV Fetch Failed"),
+      },
+      { status: res.status },
+    );
   }
 
   return {
-    success: true,
-    cvs,
+    success: res.ok,
+    cvs: res.data,
   };
 };
 
-export const action = async ({ request }: LoaderArgs) => {
+export const action = async ({ request }: Route.ActionArgs) => {
   return logout(request);
 };
 
 export interface DashboardContext {
   user: User | null;
-  cvs: UserCV[];
+  cvs: CV[];
 }
 
 export default function DashboardLayout({ loaderData }: ComponentProps) {
@@ -105,7 +99,7 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
     setSearchParams(next);
   };
 
-  const selectedCV = cvs.find((cv: UserCV) => cv.id === selectedCvId);
+  const selectedCV = cvs.find((cv: CV) => cv.id === selectedCvId);
 
   return (
     <div className="flex h-screen w-full bg-[#fcfcfd] overflow-hidden">
@@ -163,6 +157,20 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
                   >
                     <Search size={24} />
                     Search
+                  </NavLink>
+                  <NavLink
+                    to="/app/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 p-3 rounded-xl transition-all font-medium text-base ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    <Settings size={24} />
+                    Settings
                   </NavLink>
 
                   <div className="pt-6">
@@ -228,7 +236,7 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
                           className="w-full p-3 text-sm bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                         >
                           <option value="">Select Resume</option>
-                          {cvs.map((cv: UserCV) => (
+                          {cvs.map((cv: CV) => (
                             <option key={cv.id} value={cv.id}>
                               {cv.file_name}
                             </option>
@@ -260,8 +268,9 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
           <Svg />
         </Link>
         <div className="flex flex-col space-y-4 flex-1">
-          <SidebarLink to="/app/upload" icon={<FileUp size={20} />} />
-          <SidebarLink to="/app/search" icon={<Search size={20} />} />
+          <SidebarLink to="/app/upload" icon={<FileUp size={20} />} ariaLabel="Upload" />
+          <SidebarLink to="/app/search" icon={<Search size={20} />} ariaLabel="Search" />
+          <SidebarLink to="/app/settings" icon={<Settings size={20} />} ariaLabel="Settings" />
         </div>
       </nav>
 
@@ -354,7 +363,7 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
                     className="w-full p-1 text-xs bg-transparent border-none outline-none text-blue-900 font-medium rounded focus:ring-1 focus:ring-blue-500"
                   >
                     <option value="">Select Resume</option>
-                    {cvs.map((cv: UserCV) => (
+                    {cvs.map((cv: CV) => (
                       <option key={cv.id} value={cv.id}>
                         {cv.file_name}
                       </option>
@@ -446,10 +455,19 @@ function FeatureNavItem({
   );
 }
 
-function SidebarLink({ to, icon }: { to: string; icon: React.ReactNode }) {
+function SidebarLink({
+  to,
+  icon,
+  ariaLabel,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  ariaLabel?: string;
+}) {
   return (
     <NavLink
       to={to}
+      aria-label={ariaLabel}
       className={({ isActive }) =>
         `p-3 rounded-xl transition-all ${isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "text-gray-400 hover:bg-gray-100"}`
       }

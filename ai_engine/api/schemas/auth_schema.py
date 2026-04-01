@@ -5,14 +5,19 @@ class LoginRequest(BaseModel):
     id_token: str
 
 
-class LoginResponse(BaseModel):
-    message: str
+class TokenData(BaseModel):
     access_token: str | None = None
     token_type: str = "bearer"
 
 
+class LoginResponse(BaseModel):
+    status: str = "success"
+    data: TokenData
+
+
 class LogoutResponse(BaseModel):
-    message: str
+    status: str = "success"
+    data: str
 
 
 class GoogleUserInfo(BaseModel):

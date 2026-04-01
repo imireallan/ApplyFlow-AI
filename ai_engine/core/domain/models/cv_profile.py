@@ -13,7 +13,7 @@ class CVProfile(BaseModel):
     skills: list[str]
     experience: list[Any]
     education: list[Any]
-    cv_id: UUID | None = None
+    cv_id: UUID
 
 
 @dataclass

@@ -8,6 +8,7 @@ from api.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
     LogoutResponse,
+    TokenData,
 )
 from api.schemas.user_schema import UserResponse
 from core.config.settings import settings
@@ -50,13 +51,10 @@ def login_google(
         httponly=True,
         secure=settings.SECURE_COOKIE,
         samesite="lax",
-        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60
+        max_age=settings.ACCESS_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
     )
 
-    return LoginResponse(
-        message="Login successful",
-        access_token=token,
-    )
+    return LoginResponse(data=TokenData(access_token=token))
 
 
 @router.get("/me", response_model=UserResponse)  # noqa: misc
@@ -67,4 +65,4 @@ def get_me(current_user: CurrentUser) -> User:
 @router.post("/logout", response_model=LogoutResponse)  # noqa: misc
 def logout(response: Response) -> LogoutResponse:
     response.delete_cookie("access_token")
-    return LogoutResponse(message="Logged out")
+    return LogoutResponse(data="Logged out")

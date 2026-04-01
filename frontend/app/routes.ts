@@ -8,5 +8,6 @@ export default [
     index("./routes/upload.tsx", { id: "dashboard-home" }),
     route("upload", "./routes/upload.tsx"),
     route("search", "./routes/search.tsx"),
+    route("settings", "./routes/settings.tsx"),
   ]),
 ] satisfies RouteConfig;

@@ -21,7 +21,7 @@ class TokenPayload(BaseModel):
 def create_access_token(data: dict[str, Any]) -> str:
     to_encode = data.copy()
     expire = datetime.now(timezone.utc) + timedelta(
-        days=settings.ACCESS_TOKEN_EXPIRE_DAYS
+        days=int(settings.ACCESS_TOKEN_EXPIRE_DAYS)
     )
     to_encode["exp"] = int(expire.timestamp())
     return jwt.encode(to_encode, settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)

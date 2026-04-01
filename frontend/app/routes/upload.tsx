@@ -1,15 +1,17 @@
-import { redirect } from "react-router";
+import { data, redirect, useNavigation, useSubmit } from "react-router";
 // Request type inferred from Remix
-import { apiRequestHandler } from "~/.server/apiRequestHandler";
+import { createUserCVProfileHandler, uploadCVHandler } from "~/.server/cv";
+import { ErrorComponent } from "~/components/Error";
 import { UploadForm } from "~/components/UploadForm";
-
-interface ActionArgs {
-  request: Request;
-}
+import { formatApiError } from "~/helpers/apiError";
+import type { Route } from "./+types/upload";
 
 interface ComponentProps {
   actionData?: {
-    error?: string;
+    error?: {
+      title: string;
+      message: string;
+    };
   };
 }
 
@@ -17,7 +19,7 @@ export async function loader() {
   return null;
 }
 
-export async function action({ request }: ActionArgs) {
+export async function action({ request }: Route.ActionArgs) {
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirectTo")?.trim();
 
@@ -32,31 +34,40 @@ export async function action({ request }: ActionArgs) {
     const apiData = new FormData();
     apiData.append("file", file);
 
-    const indexResponse = (await apiRequestHandler(request, {
-      endpoint: "/cv/index-cv",
-      method: "POST",
-      body: apiData,
-    })) as any;
+    const indexRes = await uploadCVHandler(request, apiData);
 
-    const getErrorMessage = async (res: any) =>
-      res instanceof Response
-        ? (await res.json()).detail || "API Error"
-        : res?.data?.error;
-
-    if (indexResponse instanceof Response || indexResponse?.data?.error) {
-      return { error: await getErrorMessage(indexResponse) };
+    if (!indexRes.ok) {
+      return data(
+        {
+          error: formatApiError(indexRes.data, "CV indexing failed."),
+        },
+        { status: indexRes.status },
+      );
     }
 
-    const cvId = indexResponse.data?.cv_id;
-    if (!cvId) return { error: "CV indexing failed: missing CV ID." };
+    const cvId = indexRes.data.cv_id;
 
-    const profileResponse = (await apiRequestHandler(request, {
-      endpoint: `/cv/${cvId}/profile`,
-      method: "POST",
-    })) as any;
+    if (!cvId) {
+      return data(
+        {
+          error: {
+            title: "Internal Server Error",
+            message: "CV indexing failed: missing CV ID.",
+          },
+        },
+        { status: 500 },
+      );
+    }
 
-    if (profileResponse instanceof Response || profileResponse?.data?.error) {
-      return { error: await getErrorMessage(profileResponse) };
+    const profileRes = await createUserCVProfileHandler(request, cvId);
+
+    if (!profileRes.ok) {
+      return data(
+        {
+          error: formatApiError(profileRes.data, "Profile generation failed"),
+        },
+        { status: profileRes.status },
+      );
     }
 
     const destination = redirectTo || `/app/search?cv_id=${cvId}`;
@@ -68,6 +79,8 @@ export async function action({ request }: ActionArgs) {
 }
 
 export default function UploadPage({ actionData }: ComponentProps) {
+  const submit = useSubmit();
+  const navigation = useNavigation();
   return (
     <div className="w-full h-full flex flex-col items-center justify-center p-8 lg:p-12">
       <div className="text-center max-w-sm w-full">
@@ -79,7 +92,17 @@ export default function UploadPage({ actionData }: ComponentProps) {
         </p>
       </div>
       <div className="w-full max-w-sm">
-        <UploadForm error={actionData?.error} />
+        <UploadForm
+          error={actionData?.error}
+          submit={submit}
+          navigation={navigation}
+        />
+        {actionData?.error && (
+          <ErrorComponent
+            title={actionData?.error.title}
+            message={actionData.error.message}
+          />
+        )}
       </div>
     </div>
   );

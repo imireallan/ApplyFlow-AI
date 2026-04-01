@@ -113,7 +113,7 @@ export async function requireUser(request: Request) {
 }
 
 /** Get the user token from the request */
-export async function getUserToken(request: Request) {
+export function getUserToken(request: Request) {
   return getAccessToken(request);
 }
 

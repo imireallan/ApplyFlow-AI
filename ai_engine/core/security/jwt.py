@@ -13,9 +13,9 @@ from core.config.settings import settings
 class TokenPayload(BaseModel):
     sub: UUID
     exp: int
+    role: str | None = None
 
-    class Config:
-        extra = "allow"
+    model_config = {"extra": "allow"}
 
 
 def create_access_token(data: dict[str, Any]) -> str:

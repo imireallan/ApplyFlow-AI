@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -83,7 +84,7 @@ def check_migration_status() -> bool:
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     print("🚀 Starting ApplyFlow AI Engine")
 
     try:

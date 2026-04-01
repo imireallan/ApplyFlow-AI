@@ -26,6 +26,13 @@ plugins = ['pydantic.mypy']
 module = "alembic.*"
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = "tests.*"
+check_untyped_defs = false
+disallow_untyped_calls = false
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]

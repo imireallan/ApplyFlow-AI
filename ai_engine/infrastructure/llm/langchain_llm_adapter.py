@@ -41,8 +41,8 @@ class LangChainLLMAdapter(LLMPort):
                 model_name="llama-3.3-70b-versatile",
                 temperature=0,
             )
-        self.match_parser = PydanticOutputParser(pydantic_object=MatchAnalysisResult)
-        self.profile_parser = PydanticOutputParser(
+        self.match_parser: PydanticOutputParser[MatchAnalysisResult] = PydanticOutputParser(pydantic_object=MatchAnalysisResult)
+        self.profile_parser: PydanticOutputParser[ProfileAnalysisResult] = PydanticOutputParser(
             pydantic_object=ProfileAnalysisResult
         )
 

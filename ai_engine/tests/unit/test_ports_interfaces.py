@@ -1,8 +1,10 @@
 """Tests for core/application/ports/ - the port interfaces."""
 
+from typing import Any
 
 import pytest
 
+from core.application.models.match import MatchSimilarityScore
 from core.application.ports.vector_store_port import VectorStorePort
 from core.application.ports.llm_port import LLMPort
 
@@ -14,10 +16,10 @@ class TestVectorStorePort:
 
     def test_query_is_abstract(self):
         class ConcreteStore(VectorStorePort):
-            def query(self, query: str, user_id: str, k: int, cv_id: str = None):
+            def query(self, query: str, user_id: str, k: int, cv_id: str | None = None) -> list[MatchSimilarityScore]:
                 return []
 
-            def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str):
+            def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str) -> dict[str, Any]:
                 return {"ids": ["test"]}
 
         store = ConcreteStore()
@@ -26,10 +28,10 @@ class TestVectorStorePort:
 
     def test_upsert_is_abstract(self):
         class ConcreteStore(VectorStorePort):
-            def query(self, query: str, user_id: str, k: int, cv_id: str = None):
+            def query(self, query: str, user_id: str, k: int, cv_id: str | None = None) -> list[MatchSimilarityScore]:
                 return []
 
-            def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str):
+            def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str) -> dict[str, Any]:
                 return {"ids": [vector_id]}
 
         store = ConcreteStore()

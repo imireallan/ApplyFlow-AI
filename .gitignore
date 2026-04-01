@@ -213,15 +213,19 @@ applyflow-ec2-key.pem
 terraform/.terraform/
 .env.prod
 
+# Frontend test artifacts
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+frontend/test-results.json
+frontend/vitest-results.json
+frontend/node_modules/
+frontend/*.local
+
 # Playwright
-node_modules/
 /test-results/
 /playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
-playwright/.auth/
-test-results/
-playwright-report/
-test-results.json
-coverage
+

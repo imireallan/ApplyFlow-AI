@@ -105,7 +105,7 @@ describe("Upload Route", () => {
     screen.debug()
 
     await waitFor(() => {
-      expect(screen.getByText(error.title)).toBeInTheDocument();
+      expect(screen.getAllByText(error.title).length).toBeGreaterThanOrEqual(1);
     });
   });
 });

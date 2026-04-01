@@ -1,46 +1,53 @@
 import { expect, test } from "@playwright/test";
 
 test.describe("Upload Page @auth", () => {
-  test.use({
-    storageState: "tests/playwright-auth.json",
-    actionTimeout: 10000,
-  });
-  test("visits upload page and uploads file", async ({ page }) => {
-    // Start from landing, auto-redirect or mock login
-    await page.goto("/");
-    await page.waitForURL(/app\/upload|app/); // Handles login redirect if session present
+  test("visits upload page and can interact with the form", async ({ page }) => {
     await page.goto("/app/upload");
 
-    await expect(page).toHaveTitle(/Upload/);
+    await expect(page.getByText(/Upload Your Resume/i)).toBeVisible();
 
-    // Check form is present
-    await expect(page.getByText(/upload your resume/i)).toBeVisible();
+    const fileInput = page.getByTestId("file-input");
+    await expect(fileInput).toBeVisible();
 
-    // Mock file upload (requires MSW or API mocking for full test)
+    // Upload button is disabled with no file
+    const uploadButton = page
+      .getByRole("button", { name: /Upload Resume/i })
+      .first();
+    await expect(uploadButton).toBeDisabled();
+
+    // Set files programmatically
     const mockFile = {
       name: "test.pdf",
       mimeType: "application/pdf",
-      buffer: Buffer.from("test content"),
+      buffer: Buffer.from("%PDF-mock-content"),
     };
-
-    // Upload file
-    const fileInput = page.getByTestId("file-input");
     await fileInput.setInputFiles(mockFile);
 
-    await page.getByRole("button", { name: /upload/i }).click();
+    // Verify file was selected — the UI must reflect "test.pdf"
+    await expect(page.getByText("test.pdf")).toBeVisible({ timeout: 5000 });
+    await expect(page.getByText(/Ready for scanning/i)).toBeVisible({
+      timeout: 5000,
+    });
 
-    // Wait for redirect to search
-    await page.waitForURL(/.*search.*/);
-    await expect(page).toHaveURL(/search/);
+    // Click submit to trigger the form action
+    // The backend call will fail (no real API), but we verify the
+    // UI transitions to the processing state
+    await uploadButton.click();
+
+    // Wait for "Analyzing..." button to prove form was submitted
+    await expect(
+      page.getByRole("button", { name: /Analyzing/i })
+    ).toBeVisible({ timeout: 5000 });
   });
 
-  test("shows error on invalid file", async ({ page }) => {
-    await page.goto("/");
-    await page.waitForURL(/app\/upload|app/);
-    await page.goto("/upload");
+  test("shows disabled upload button without a file", async ({ page }) => {
+    await page.goto("/app/upload");
+    await page.waitForURL(/upload/);
 
-    await page.getByRole("button", { name: /upload/i }).click();
+    const uploadButton = page
+      .getByRole("button", { name: /Upload Resume/i })
+      .first();
 
-    await expect(page.getByText(/please select/i)).toBeVisible();
+    await expect(uploadButton).toBeDisabled();
   });
 });

@@ -9,6 +9,7 @@ export default defineConfig({
     setupFiles: ["./tests/vitest.setup.ts"],
     css: true,
     include: ["**/*.{test,spec}.{ts,tsx}"],
+    exclude: ["**/node_modules/**", "**/tests/e2e/**"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html"],
@@ -17,6 +18,7 @@ export default defineConfig({
         "**/dist/**",
         "**/build/**",
         "**/.react-router/**",
+        "**/tests/e2e/**",
       ],
     },
   },

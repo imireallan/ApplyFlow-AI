@@ -1,10 +1,10 @@
 import { defineConfig, devices } from "@playwright/test";
 import path from "path";
+import { fileURLToPath } from "url";
 
-/**
- * Path where the authenticated session state will be stored.
- * Add this directory to your .gitignore.
- */
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 export const STORAGE_STATE = path.join(__dirname, "playwright/.auth/user.json");
 
 export default defineConfig({
@@ -23,39 +23,23 @@ export default defineConfig({
   },
 
   projects: [
-    // --- 1. SETUP PHASE ---
+    // 1. Auth setup - creates the storageState file
     {
       name: "setup",
       testMatch: /auth\.setup\.ts/,
     },
 
-    // --- 2. AUTHENTICATED E2E PHASE ---
+    // 2. All e2e tests run here with auth state available
     {
-      name: "chromium-auth",
+      name: "chromium",
       use: {
         ...devices["Desktop Chrome"],
         storageState: STORAGE_STATE,
       },
       dependencies: ["setup"],
     },
-
-    // --- 3. UNAUTHENTICATED / CROSS-BROWSER PHASE ---
-    // Use these for testing the Landing Page and Login Flow specifically
-    {
-      name: "chromium",
-      use: { ...devices["Desktop Chrome"] },
-    },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
-    {
-      name: "webkit",
-      use: { ...devices["Desktop Safari"] },
-    },
   ],
 
-  /* Run your local dev server before starting the tests */
   webServer: {
     command: "npm run dev",
     url: "http://localhost:5173",

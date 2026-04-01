@@ -11,8 +11,8 @@
     "test:ui": "vitest --ui --open",
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
-    "playwright": "playwright test",
-    "playwright:ui": "playwright test --ui",
+    "playwright": "TEST_MOCK=true playwright test",
+    "playwright:ui": "TEST_MOCK=true playwright test --ui",
     "playwright:codegen": "playwright codegen localhost:5173",
     "test:e2e": "playwright test"
   },

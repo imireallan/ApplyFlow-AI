@@ -87,7 +87,7 @@ class TestCVIndexService:
             MockReader.return_value.pages = [mock_pages]
 
             with pytest.raises(ValueError, match="No text content"):
-                service.index_cv("/tmp/empty.pdf", user_id="test-user")
+                service.index_cv("/tmp/empty.pdf", user_id="550e8400-e29b-41d4-a716-446655440000")
 
     def test_index_cv_creates_embeddings(
         self, mock_vector_store, mock_cv_repository, mock_embedding_repository
@@ -109,6 +109,6 @@ class TestCVIndexService:
             MockReader.return_value.pages = [mock_pages]
             mock_chunk.return_value = ["c1", "c2", "c3"]
 
-            service.index_cv("/tmp/test.pdf", user_id="test-user")
+            service.index_cv("/tmp/test.pdf", user_id="550e8400-e29b-41d4-a716-446655440000")
 
             assert mock_embedding_repository.create.call_count == 3

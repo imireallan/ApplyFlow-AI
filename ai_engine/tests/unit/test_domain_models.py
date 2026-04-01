@@ -29,18 +29,23 @@ class TestCVProfile:
         profile = CVProfile(
             id=uuid4(),
             user_id=uuid4(),
-            full_name="John Doe",
-            raw_text="Profile text",
+            name="John Doe",
+            summary="Profile text",
+            skills=[],
+            experience=[],
+            education=[],
         )
-        assert profile.full_name == "John Doe"
+        assert profile.name == "John Doe"
 
     def test_create_profile_full(self):
         profile = CVProfile(
             id=uuid4(),
             user_id=uuid4(),
-            full_name="John Doe",
+            name="John Doe",
             skills=["Python", "FastAPI"],
-            raw_text="Profile text",
+            summary="Profile text",
+            experience=[],
+            education=[],
         )
         assert "Python" in profile.skills
 

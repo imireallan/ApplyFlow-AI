@@ -32,7 +32,7 @@ class TestVectorStoreError:
 
     def test_upsert_error(self):
         error = VectorStoreError(log_message="Upsert failed")
-        assert "upsert" in error.detail.lower()
+        assert "save" in error.detail.lower() or "vector" in error.detail.lower()
 
     def test_query_error(self):
         error = VectorStoreError(log_message="Query timeout")

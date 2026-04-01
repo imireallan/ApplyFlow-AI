@@ -1,13 +1,15 @@
 import logging
 import time
-from typing import Any
+from typing import Awaitable, Callable
 
 from fastapi import Request, Response
 
 logger = logging.getLogger("performance")
 
 
-async def timing_middleware(request: Request, call_next: Any):
+async def timing_middleware(
+    request: Request, call_next: Callable[[Request], Awaitable[Response]]
+) -> Response:
     if request.url.path == "/health":
         return await call_next(request)
     start = time.perf_counter()

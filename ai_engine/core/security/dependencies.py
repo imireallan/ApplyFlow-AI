@@ -22,7 +22,8 @@ def extract_token_from_header(request: Request) -> str | None:
     if len(parts) != 2 or parts[0].lower() != "bearer":
         return None
 
-    return parts[1]
+    token: str | None = parts[1]
+    return token
 
 
 def get_current_user(

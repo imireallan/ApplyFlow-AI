@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="59" time="5.828" timestamp="2026-04-02T00:11:58.051093+03:00" hostname="MacBook-Air.local"><testcase classname="tests.api.test_cv_routes.TestListUserCVs" name="test_list_user_cvs_empty" time="0.008" /><testcase classname="tests.api.test_cv_routes.TestIndexCV" name="test_index_cv_non_pdf" time="0.010" /><testcase classname="tests.api.test_cv_routes.TestIndexCV" name="test_index_cv_pdf_success" time="0.005" /><testcase classname="tests.integration.test_pipeline.TestFullIndexAndQueryPipeline" name="test_index_then_query" time="0.006" /><testcase classname="tests.integration.test_pipeline.TestFullIndexAndQueryPipeline" name="test_index_multiple_cvs_for_same_user" time="0.003" /><testcase classname="tests.unit.test_cv_index_service.TestCVIndexService" name="test_init" time="0.002" /><testcase classname="tests.unit.test_cv_index_service.TestCVIndexService" name="test_extract_text_from_pdf" time="0.002" /><testcase classname="tests.unit.test_cv_index_service.TestCVIndexService" name="test_index_cv_success" time="0.002" /><testcase classname="tests.unit.test_cv_index_service.TestCVIndexService" name="test_index_cv_empty_pdf" time="0.001" /><testcase classname="tests.unit.test_cv_index_service.TestCVIndexService" name="test_index_cv_creates_embeddings" time="0.001"><failure message="ValueError: badly formed hexadecimal UUID string">self = &lt;test_cv_index_service.TestCVIndexService object at 0x300b18050&gt;
+mock_vector_store = &lt;MagicMock id='12897517648'&gt;, mock_cv_repository = &lt;MagicMock id='12897106784'&gt;
+mock_embedding_repository = &lt;MagicMock id='12897105776'&gt;
+
+    def test_index_cv_creates_embeddings(
+        self, mock_vector_store, mock_cv_repository, mock_embedding_repository
+    ):
+        service = CVIndexService(
+            vector_store=mock_vector_store,
+            cv_repository=mock_cv_repository,
+            embedding_repository=mock_embedding_repository,
+        )
+    
+        with (
+            patch("core.application.services.cv_index_service.PdfReader") as MockReader,
+            patch(
+                "core.application.services.cv_index_service.chunk_text"
+            ) as mock_chunk,
+        ):
+            mock_pages = MagicMock()
+            mock_pages.extract_text.return_value = "Test content" * 5
+            MockReader.return_value.pages = [mock_pages]
+            mock_chunk.return_value = ["c1", "c2", "c3"]
+    
+&gt;           service.index_cv("/tmp/test.pdf", user_id="test-user")
+
+tests/unit/test_cv_index_service.py:112: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+core/application/services/cv_index_service.py:45: in index_cv
+    user_id=UUID(user_id),
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;[AttributeError("'uuid.UUID' object has no attribute 'int'") raised in repr()] UUID object at 0x300b42690&gt;
+hex = 'testuser', bytes = None, bytes_le = None, fields = None, int = None, version = None
+
+    def __init__(self, hex=None, bytes=None, bytes_le=None, fields=None,
+                       int=None, version=None,
+                       *, is_safe=SafeUUID.unknown):
+        r"""Create a UUID from either a string of 32 hexadecimal digits,
+        a string of 16 bytes as the 'bytes' argument, a string of 16 bytes
+        in little-endian order as the 'bytes_le' argument, a tuple of six
+        integers (32-bit time_low, 16-bit time_mid, 16-bit time_hi_version,
+        8-bit clock_seq_hi_variant, 8-bit clock_seq_low, 48-bit node) as
+        the 'fields' argument, or a single 128-bit integer as the 'int'
+        argument.  When a string of hex digits is given, curly braces,
+        hyphens, and a URN prefix are all optional.  For example, these
+        expressions all yield the same UUID:
+    
+        UUID('{12345678-1234-5678-1234-567812345678}')
+        UUID('12345678123456781234567812345678')
+        UUID('urn:uuid:12345678-1234-5678-1234-567812345678')
+        UUID(bytes='\x12\x34\x56\x78'*4)
+        UUID(bytes_le='\x78\x56\x34\x12\x34\x12\x78\x56' +
+                      '\x12\x34\x56\x78\x12\x34\x56\x78')
+        UUID(fields=(0x12345678, 0x1234, 0x5678, 0x12, 0x34, 0x567812345678))
+        UUID(int=0x12345678123456781234567812345678)
+    
+        Exactly one of 'hex', 'bytes', 'bytes_le', 'fields', or 'int' must
+        be given.  The 'version' argument is optional; if given, the resulting
+        UUID will have its variant and version set according to RFC 4122,
+        overriding the given 'hex', 'bytes', 'bytes_le', 'fields', or 'int'.
+    
+        is_safe is an enum exposed as an attribute on the instance.  It
+        indicates whether the UUID has been generated in a way that is safe
+        for multiprocessing applications, via uuid_generate_time_safe(3).
+        """
+    
+        if [hex, bytes, bytes_le, fields, int].count(None) != 4:
+            raise TypeError('one of the hex, bytes, bytes_le, fields, '
+                            'or int arguments must be given')
+        if hex is not None:
+            hex = hex.replace('urn:', '').replace('uuid:', '')
+            hex = hex.strip('{}').replace('-', '')
+            if len(hex) != 32:
+&gt;               raise ValueError('badly formed hexadecimal UUID string')
+E               ValueError: badly formed hexadecimal UUID string
+
+/opt/anaconda3/lib/python3.13/uuid.py:181: ValueError</failure></testcase><testcase classname="tests.unit.test_domain_models.TestCV" name="test_create_cv" time="0.000" /><testcase classname="tests.unit.test_domain_models.TestCV" name="test_cv_has_required_fields" time="0.000" /><testcase classname="tests.unit.test_domain_models.TestCVProfile" name="test_create_profile_minimal" time="0.000"><failure message="TypeError: CVProfile.__init__() got an unexpected keyword argument 'full_name'">self = &lt;test_domain_models.TestCVProfile object at 0x300aa7d90&gt;
+
+    def test_create_profile_minimal(self):
+&gt;       profile = CVProfile(
+            id=uuid4(),
+            user_id=uuid4(),
+            full_name="John Doe",
+            raw_text="Profile text",
+        )
+E       TypeError: CVProfile.__init__() got an unexpected keyword argument 'full_name'
+
+tests/unit/test_domain_models.py:29: TypeError</failure></testcase><testcase classname="tests.unit.test_domain_models.TestCVProfile" name="test_create_profile_full" time="0.000"><failure message="TypeError: CVProfile.__init__() got an unexpected keyword argument 'full_name'">self = &lt;test_domain_models.TestCVProfile object at 0x300aa7ed0&gt;
+
+    def test_create_profile_full(self):
+&gt;       profile = CVProfile(
+            id=uuid4(),
+            user_id=uuid4(),
+            full_name="John Doe",
+            skills=["Python", "FastAPI"],
+            raw_text="Profile text",
+        )
+E       TypeError: CVProfile.__init__() got an unexpected keyword argument 'full_name'
+
+tests/unit/test_domain_models.py:38: TypeError</failure></testcase><testcase classname="tests.unit.test_domain_models.TestCVEmbedding" name="test_create_embedding" time="0.000" /><testcase classname="tests.unit.test_domain_models.TestCVEmbedding" name="test_embedding_vector_id_format" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestInvalidFileTypeError" name="test_default_message" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestInvalidFileTypeError" name="test_custom_message" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_default_error" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_not_found_error" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_connection_error" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_upsert_error" time="0.000"><failure message="AssertionError: assert 'upsert' in 'failed to save cv data to vector store. please try again.'&#10; +  where 'failed to save cv data to vector store. please try again.' = &lt;built-in method lower of str object at 0x17e5308f0&gt;()&#10; +    where &lt;built-in method lower of str object at 0x17e5308f0&gt; = 'Failed to save CV data to vector store. Please try again.'.lower&#10; +      where 'Failed to save CV data to vector store. Please try again.' = VectorStoreError(status_code=503, detail='Failed to save CV data to vector store. Please try again.').detail">self = &lt;test_exception_handlers.TestVectorStoreError object at 0x300af88a0&gt;
+
+    def test_upsert_error(self):
+        error = VectorStoreError(log_message="Upsert failed")
+&gt;       assert "upsert" in error.detail.lower()
+E       AssertionError: assert 'upsert' in 'failed to save cv data to vector store. please try again.'
+E        +  where 'failed to save cv data to vector store. please try again.' = &lt;built-in method lower of str object at 0x17e5308f0&gt;()
+E        +    where &lt;built-in method lower of str object at 0x17e5308f0&gt; = 'Failed to save CV data to vector store. Please try again.'.lower
+E        +      where 'Failed to save CV data to vector store. Please try again.' = VectorStoreError(status_code=503, detail='Failed to save CV data to vector store. Please try again.').detail
+
+tests/unit/test_exception_handlers.py:35: AssertionError</failure></testcase><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_query_error" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_logs_error_message" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_preserves_custom_status_code" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_logs_message_is_stored" time="0.000" /><testcase classname="tests.unit.test_exception_handlers.TestVectorStoreError" name="test_short_logs_are_truncated" time="0.000" /><testcase classname="tests.unit.test_jwt.TestTokenPayload" name="test_create_payload" time="0.000" /><testcase classname="tests.unit.test_jwt.TestTokenPayload" name="test_payload_extras" time="0.000" /><testcase classname="tests.unit.test_jwt.TestCreateAccessToken" name="test_token_is_string" time="0.000" /><testcase classname="tests.unit.test_jwt.TestCreateAccessToken" name="test_token_not_empty" time="0.000" /><testcase classname="tests.unit.test_jwt.TestCreateAccessToken" name="test_token_contains_user_id" time="0.000" /><testcase classname="tests.unit.test_jwt.TestCreateAccessToken" name="test_token_expires" time="0.000" /><testcase classname="tests.unit.test_jwt.TestDecodeToken" name="test_valid_token" time="0.000" /><testcase classname="tests.unit.test_jwt.TestDecodeToken" name="test_invalid_token_raises_401" time="0.000" /><testcase classname="tests.unit.test_jwt.TestDecodeToken" name="test_empty_token_raises_401" time="0.000" /><testcase classname="tests.unit.test_jwt.TestDecodeToken" name="test_malformed_jwt_raises_401" time="0.000" /><testcase classname="tests.unit.test_ports_interfaces.TestVectorStorePort" name="test_is_abstract" time="0.000" /><testcase classname="tests.unit.test_ports_interfaces.TestVectorStorePort" name="test_query_is_abstract" time="0.000" /><testcase classname="tests.unit.test_ports_interfaces.TestVectorStorePort" name="test_upsert_is_abstract" time="0.000" /><testcase classname="tests.unit.test_ports_interfaces.TestLLMPort" name="test_is_abstract" time="0.000" /><testcase classname="tests.unit.test_ports_interfaces.TestLLMPort" name="test_analyze_match_is_abstract" time="0.000" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_settings_defaults" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_database_url_external" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_database_url_local" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_pinecone_index_selection_dev" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_pinecone_index_selection_prod" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_allowed_origins_contains_localhost" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_secure_cookie_default" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_embedding_provider_default" time="0.001" /><testcase classname="tests.unit.test_settings.TestSettings" name="test_embedding_model_default" time="0.001" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_splits_long_text" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_returns_list" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_empty_string" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_single_word" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_preserves_content" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_respects_chunk_size" time="0.001" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_with_newlines" time="0.000" /><testcase classname="tests.unit.test_text_chunker.TestChunkText" name="test_chunk_text_with_special_chars" time="0.000" /></testsuite></testsuites>

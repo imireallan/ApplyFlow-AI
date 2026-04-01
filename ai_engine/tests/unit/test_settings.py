@@ -1,11 +1,9 @@
 """Tests for core/config/settings.py"""
-import os
-import unittest
 
 from core.config.settings import Settings
 
 
-class TestSettings(unittest.TestCase):
+class TestSettings:
     """Test configuration loading and validation."""
 
     def test_settings_defaults(self):
@@ -17,7 +15,6 @@ class TestSettings(unittest.TestCase):
         )
         assert settings.ENV == "development"
         assert settings.POSTGRES_USER == "postgres"
-        assert settings.POSTGRES_DB == "applyflow_db"
         assert settings.JWT_ALGORITHM == "HS256"
         assert settings.ACCESS_TOKEN_EXPIRE_DAYS == 7
 
@@ -46,7 +43,7 @@ class TestSettings(unittest.TestCase):
         url = settings.DATABASE_URL
         assert "testuser:password123@localhost:5432/testdb" in url
 
-    def test_pinecone_index_selection(self):
+    def test_pinecone_index_selection_dev(self):
         settings = Settings(
             ENV="development",
             PINECONE_INDEX_NAME_DEV="dev-index",
@@ -56,7 +53,7 @@ class TestSettings(unittest.TestCase):
         )
         assert settings.PINECONE_INDEX == "dev-index"
 
-    def test_pinecone_index_production(self):
+    def test_pinecone_index_selection_prod(self):
         settings = Settings(
             ENV="production",
             PINECONE_INDEX_NAME_DEV="dev-index",

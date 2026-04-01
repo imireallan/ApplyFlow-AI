@@ -16,7 +16,7 @@ class CVProfileRepository(ABC):
     @abstractmethod
     def get_by_cv_id(self, cv_id: UUID) -> CVProfile | None:
         pass
-    
+
     @abstractmethod
     def get_by_user_id(self, user_id: UUID) -> CVProfile | None:
         pass

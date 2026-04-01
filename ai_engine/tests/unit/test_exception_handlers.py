@@ -1,8 +1,6 @@
 """Tests for api/exception_handlers.py"""
-import logging
 
-import pytest
-from fastapi import HTTPException, status
+import logging
 
 from api.exception_handlers import InvalidFileTypeError, VectorStoreError
 
@@ -42,7 +40,7 @@ class TestVectorStoreError:
 
     def test_logs_error_message(self, caplog):
         with caplog.at_level(logging.ERROR):
-            error = VectorStoreError(log_message="Test error message")
+            _ = VectorStoreError(log_message="Test error message")
         assert any("Test error message" in record.message for record in caplog.records)
 
     def test_preserves_custom_status_code(self):

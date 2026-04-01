@@ -1,6 +1,5 @@
 """Tests for core/application/ports/ - the port interfaces."""
-import abc
-from unittest.mock import MagicMock
+
 
 import pytest
 
@@ -17,6 +16,7 @@ class TestVectorStorePort:
         class ConcreteStore(VectorStorePort):
             def query(self, query: str, user_id: str, k: int, cv_id: str = None):
                 return []
+
             def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str):
                 return {"ids": ["test"]}
 
@@ -28,6 +28,7 @@ class TestVectorStorePort:
         class ConcreteStore(VectorStorePort):
             def query(self, query: str, user_id: str, k: int, cv_id: str = None):
                 return []
+
             def upsert(self, vector_id: str, content: str, user_id: str, cv_id: str):
                 return {"ids": [vector_id]}
 
@@ -43,5 +44,6 @@ class TestLLMPort:
 
     def test_analyze_match_is_abstract(self):
         from core.application.ports.llm_port import LLMPort
-        assert hasattr(LLMPort, 'analyze_match')
-        assert hasattr(LLMPort, 'extract_cv_profile')
+
+        assert hasattr(LLMPort, "analyze_match")
+        assert hasattr(LLMPort, "extract_cv_profile")

@@ -1,14 +1,11 @@
 """Shared test fixtures for ai_engine tests."""
-import io
-from pathlib import Path
-from unittest.mock import MagicMock, MagicMock, AsyncMock
+
+from unittest.mock import MagicMock, AsyncMock
 from uuid import UUID, uuid4
 
 import pytest
 
 from core.domain.models.cv import CV
-from core.domain.models.cv_embedding import CVEmbedding
-from core.domain.models.cv_profile import CVProfile
 
 
 @pytest.fixture
@@ -34,7 +31,7 @@ def sample_cv(user_id: str, cv_id: UUID) -> CV:
 @pytest.fixture
 def sample_job_description() -> str:
     return """Senior Backend Developer
-    
+
     We are looking for an experienced backend developer with
     strong Python skills and FastAPI experience."""
 

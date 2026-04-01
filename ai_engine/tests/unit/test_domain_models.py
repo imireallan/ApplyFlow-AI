@@ -1,7 +1,6 @@
 """Tests for core/domain/models/"""
-from uuid import UUID, uuid4
 
-import pytest
+from uuid import UUID, uuid4
 
 from core.domain.models.cv import CV
 from core.domain.models.cv_embedding import CVEmbedding

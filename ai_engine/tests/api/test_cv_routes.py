@@ -1,8 +1,17 @@
-"""Tests for api/routes/cv_routes.py"""
-from unittest.mock import MagicMock, patch
+"""Tests for api/routes/cv_routes.py."""
+
+from unittest.mock import MagicMock
 
 import pytest
 from fastapi.testclient import TestClient
+
+from api.dependencies.cv import (
+    get_cv_index_service,
+    get_cv_query_service,
+    get_vector_store,
+)
+from core.security.dependencies import get_current_user
+from main import app
 
 
 @pytest.fixture
@@ -17,54 +26,49 @@ def mock_current_user():
 @pytest.fixture
 def client(mock_current_user):
     """Create a test client with mocked dependencies."""
-    from api.routes import cv_routes
-    from main import app
-    
-    app.include_router(cv_routes.router, prefix="/cv", tags=["cv"])
-    # Mock the auth dependency
-    from core.security.dependencies import get_current_user
+    # Override auth so we don't need a real token
     app.dependency_overrides[get_current_user] = lambda: mock_current_user
+    # Override vector store so the DI chain can resolve (index-cv depends on it)
+    app.dependency_overrides[get_vector_store] = lambda: MagicMock()
     return TestClient(app)
 
 
 class TestListUserCVs:
-    def test_list_user_cvs_empty(self, client, mock_cv_repository):
-        with patch(
-            "core.application.services.cv_query_service.CVQueryService",
-        ) as MockService:
-            mock_service = MagicMock()
-            mock_service.list_user_cvs.return_value = []
-            with patch(
-                "api.routes.cv_routes.get_cv_query_service",
-                return_value=mock_service,
-            ):
-                response = client.get("/cv/user-cvs")
-                assert response.status_code == 200
+    def test_list_user_cvs_empty(self, client):
+        mock_service = MagicMock()
+        mock_service.list_user_cvs.return_value = []
+        app.dependency_overrides[get_cv_query_service] = lambda: mock_service
+        try:
+            response = client.get("/cv/user-cvs")
+            assert response.status_code == 200
+        finally:
+            app.dependency_overrides.pop(get_cv_query_service, None)
 
 
 class TestIndexCV:
     def test_index_cv_non_pdf(self, client):
         """Should reject non-PDF files."""
-        file_content = b"not a pdf"
-        response = client.post(
-            "/cv/index-cv",
-            files={"file": ("test.txt", file_content, "text/plain")},
-        )
-        assert response.status_code == 400
+        mock_service = MagicMock()
+        app.dependency_overrides[get_cv_index_service] = lambda: mock_service
+        try:
+            file_content = b"not a pdf"
+            response = client.post(
+                "/cv/index-cv",
+                files={"file": ("test.txt", file_content, "text/plain")},
+            )
+            assert response.status_code == 400
+        finally:
+            app.dependency_overrides.pop(get_cv_index_service, None)
 
-    def test_index_cv_pdf_success(self, client, mock_vector_store, mock_cv_repository, mock_embedding_repository):
+    def test_index_cv_pdf_success(self, client):
         """Should process PDF files successfully."""
-        with (
-            patch("api.routes.cv_routes.get_cv_index_service") as mock_get_service,
-            patch("api.routes.cv_routes.save_temp_file", return_value="/tmp/test.pdf"),
-        ):
-            mock_service = MagicMock()
-            mock_service.index_cv.return_value = {
-                "cv_id": "550e8400-e29b-41d4-a716-446655440000",
-                "chunks": 3,
-            }
-            mock_get_service.return_value = mock_service
-            
+        mock_service = MagicMock()
+        mock_service.index_cv.return_value = {
+            "cv_id": "550e8400-e29b-41d4-a716-446655440000",
+            "chunks": 3,
+        }
+        app.dependency_overrides[get_cv_index_service] = lambda: mock_service
+        try:
             response = client.post(
                 "/cv/index-cv",
                 files={"file": ("test.pdf", b"%PDF-1.4 content", "application/pdf")},
@@ -72,3 +76,5 @@ class TestIndexCV:
             assert response.status_code == 200
             data = response.json()
             assert "cv_id" in data
+        finally:
+            app.dependency_overrides.pop(get_cv_index_service, None)

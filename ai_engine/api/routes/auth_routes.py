@@ -21,7 +21,7 @@ from infrastructure.auth.google import verify_google_token
 router = APIRouter()
 
 
-@router.post("/google", response_model=LoginResponse)  # noqa: misc
+@router.post("/google", response_model=LoginResponse)
 def login_google(
     payload: LoginRequest,
     response: Response,
@@ -57,12 +57,12 @@ def login_google(
     return LoginResponse(data=TokenData(access_token=token))
 
 
-@router.get("/me", response_model=UserResponse)  # noqa: misc
+@router.get("/me", response_model=UserResponse)
 def get_me(current_user: CurrentUser) -> User:
     return current_user
 
 
-@router.post("/logout", response_model=LogoutResponse)  # noqa: misc
+@router.post("/logout", response_model=LogoutResponse)
 def logout(response: Response) -> LogoutResponse:
     response.delete_cookie("access_token")
     return LogoutResponse(data="Logged out")

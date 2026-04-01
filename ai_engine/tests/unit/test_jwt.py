@@ -1,5 +1,5 @@
 """Tests for core/security/jwt.py"""
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 import pytest
 from fastapi import HTTPException
@@ -39,7 +39,6 @@ class TestCreateAccessToken:
     def test_token_contains_user_id(self):
         user_id = uuid4()
         token = create_access_token({"sub": user_id})
-        # Decode and verify
         payload = decode_token(token)
         assert payload.sub == user_id
 

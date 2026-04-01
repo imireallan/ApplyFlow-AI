@@ -39,12 +39,10 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       loginUrl.searchParams.set("redirectTo", pathname);
 
       const headers = token
-        ? {
-            "Set-Cookie": `access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;`,
-          }
-        : {};
+        ? { "Set-Cookie": `access_token=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0;` as string }
+        : undefined;
 
-      throw redirect(loginUrl.toString(), { headers });
+      throw redirect(loginUrl.toString(), headers ? { headers } : {});
     }
 
     user = await getUserFromRequest(request);

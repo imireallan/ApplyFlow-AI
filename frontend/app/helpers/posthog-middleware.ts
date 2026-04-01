@@ -16,7 +16,7 @@ export const posthogMiddleware: Route.MiddlewareFunction = async ({ request, con
   const sessionId = request.headers.get('X-POSTHOG-SESSION-ID');
   const distinctId = request.headers.get('X-POSTHOG-DISTINCT-ID');
 
-  (context as PostHogContext).posthog = posthog;
+  (context as unknown as PostHogContext).posthog = posthog;
 
   const response = await posthog.withContext(
     { sessionId: sessionId ?? undefined, distinctId: distinctId ?? undefined },

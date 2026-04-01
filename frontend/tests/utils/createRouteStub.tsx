@@ -1,17 +1,15 @@
-import React, { type ComponentType } from "react";
+
 import {
   createRoutesStub,
   type LoaderFunction,
   type ActionFunction,
-  type RouteObject
+  type RouteComponentType,
+  type StubRouteObject,
 } from "react-router";
 
-/**
- * Create a single-route stub (common case)
- */
 export function createRouteStubTest(
   path: string,
-  Component: ComponentType,
+  Component: RouteComponentType,
   options?: {
     loader?: LoaderFunction;
     action?: ActionFunction;
@@ -23,20 +21,14 @@ export function createRouteStubTest(
       Component,
       loader: options?.loader,
       action: options?.action,
-    },
+    } as StubRouteObject,
   ]);
 }
 
-/**
- * Create multi-route stub (advanced use cases like redirects/navigation)
- */
-export function createMultiRouteStub(routes: RouteObject[]) {
+export function createMultiRouteStub(routes: StubRouteObject[]) {
   return createRoutesStub(routes);
 }
 
-/**
- * Optional helper to render with initial route
- */
 export function renderRouteStub(
   Stub: ReturnType<typeof createRoutesStub>,
   initialEntries: string[] = ["/"]
@@ -44,7 +36,4 @@ export function renderRouteStub(
   return <Stub initialEntries={initialEntries} />;
 }
 
-/**
- * Re-export for direct usage when needed
- */
 export { createRoutesStub } from "react-router";

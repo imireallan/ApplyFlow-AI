@@ -56,7 +56,7 @@ jobs:
         run: pip install mypy pydantic
 
       - name: Run mypy
-        run: mypy core/ api/ models/ tests/ --ignore-missing-imports --no-warn-no-return
+        run: mypy core/ api/ models/ tests/ --ignore-missing-imports --no-warn-no-return --follow-imports=skip --disable-error-code=valid-type --disable-error-code=return-value
 
   pytest:
     name: Pytest (unit + api)

@@ -86,7 +86,7 @@ describe("Upload Route", () => {
   });
 
   it("handles API error gracefully", async () => {
-    const error = { title: "Upload failed", message: "Please try again." }
+    const error = { title: "Upload failed", message: "Please try again." };
 
     const Stub = createRouteStubTest("/upload", UploadPage, {
       action: async () => {
@@ -101,8 +101,6 @@ describe("Upload Route", () => {
     await user.upload(fileInput, file);
 
     await user.click(screen.getByRole("button", { name: /upload/i }));
-
-    screen.debug()
 
     await waitFor(() => {
       expect(screen.getAllByText(error.title).length).toBeGreaterThanOrEqual(1);

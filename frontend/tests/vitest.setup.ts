@@ -1,6 +1,6 @@
 import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll, vi } from "vitest";
-import { server } from "./mocks/browser";
+import { server } from "./mocks/server";
 import matchMedia from "./mocks/matchMedia";
 
 // MSW server setup for API mocking

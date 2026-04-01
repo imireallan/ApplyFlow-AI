@@ -1,95 +1,62 @@
 import { http, HttpResponse } from "msw";
 
-// Mock API endpoints used in upload flow
 export const handlers = [
-  // Mock Remix auth action (login form POST)
-  http.post("*/login/action", async ({ request }) => {
-    const formData = await request.formData();
-    const credential = formData.get("credential");
+  http.get("*/auth/me", () =>
+    HttpResponse.json({
+      id: "test-user-123",
+      email: "test@example.com",
+      full_name: "Test User",
+      first_name: "Test",
+      last_name: "User",
+      picture_url: "https://example.com/avatar.png",
+    })
+  ),
 
-    if (credential && credential.toString().startsWith("mock-google-token")) {
-      return new HttpResponse(null, {
-        status: 302,
-        headers: {
-          "Set-Cookie":
-            "auth_session=mock-auth-session-value; Path=/; HttpOnly; Secure; SameSite=Strict",
-          "Set-Cookie":
-            "__session=mock-session-cookie; Path=/; HttpOnly; Secure; SameSite=Strict",
-          Location: "/app",
-        },
-      });
+  http.post("*/auth/google", async ({ request }) => {
+    const body = await request.json();
+    const record = body as Record<string, unknown>;
+    if (!record?.id_token || !(record.id_token as string).includes("mock-")) {
+      return HttpResponse.json({ detail: "Invalid" }, { status: 401 });
     }
-
-    return new HttpResponse(JSON.stringify({ error: "Invalid credential" }), {
-      status: 400,
+    return HttpResponse.json({
+      access_token: "mock-access-token",
+      token_type: "bearer",
+      message: "Login successful",
     });
   }),
 
-  // Mock loader session check for protected routes
-  http.get("*/(app|upload|search)/loader", () => {
-    return new HttpResponse(
-      JSON.stringify({
-        user: { id: "mock-user-1", email: "test@example.com" },
-      }),
+  http.get("*/cv/user-cvs", () =>
+    HttpResponse.json([
       {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
+        id: "mock-cv-123",
+        file_name: "test-resume.pdf",
+        created_at: new Date().toISOString(),
       },
-    );
-  }),
+    ])
+  ),
 
-  // Mock user CVs loader for dashboard
-  http.get("*/cv/user-cvs", () => {
-    return new HttpResponse(
-      JSON.stringify({
-        data: {
-          data: [
-            {
-              id: "mock-cv-123",
-              file_name: "test-resume.pdf",
-              created_at: new Date().toISOString(),
-            },
-          ],
-        },
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-  }),
-  // Mock CV index/upload (backend API)
   http.post("*/cv/index-cv", async ({ request }) => {
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-
-    if (!file || !file.name.endsWith(".pdf")) {
-      return new HttpResponse(
-        JSON.stringify({ detail: "Please select a valid PDF file." }),
-        { status: 400 },
+    const file = formData.get("file") as File | null;
+    if (!file || !(file instanceof File) || !file.name.endsWith(".pdf")) {
+      return HttpResponse.json(
+        { detail: "Invalid PDF" },
+        { status: 400 }
       );
     }
-
-    return new HttpResponse(
-      JSON.stringify({
-        data: { cv_id: "mock-cv-123" },
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+    return HttpResponse.json({ cv_id: "mock-cv-123" });
   }),
 
-  http.post("*/cv/:cvId/profile", () => {
-    return new HttpResponse(
-      JSON.stringify({
-        data: { profile: "mock-profile" },
-      }),
-      {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      },
-    );
+  http.post("*/cv/*/profile", () =>
+    HttpResponse.json({ profile_id: "mock-profile-456" })
+  ),
+
+  http.post("*/job/process", async ({ request }) => {
+    const body = await request.json();
+    const record = body as Record<string, unknown>;
+    if (!record?.cv_id || !record?.job_description) {
+      return HttpResponse.json({ detail: "Missing fields" }, { status: 400 });
+    }
+    return HttpResponse.json({ fit_score: 87, matches: [] });
   }),
 ];

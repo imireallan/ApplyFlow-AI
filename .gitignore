@@ -223,3 +223,4 @@ node_modules/
 playwright/.auth/
 test-results/
 playwright-report/
+test-results.json

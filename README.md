@@ -1,61 +1,161 @@
-# ApplyFlow AI
+# ApplyFlow AI [![GitHub Repo stars](https://img.shields.io/github/stars/allanimire/ApplyFlow_AI?style=social)](https://github.com/allanimire/ApplyFlow_AI) [![Docker](https://img.shields.io/badge/Docker-Compose-blue)](https://docker.com) [![FastAPI](https://img.shields.io/badge/FastAPI-black)](https://fastapi.tiangolo.com) [![React](https://img.shields.io/badge/React-61DAFB?style=social)](https://react.dev)
 
-ApplyFlow AI is an intelligent job application assistant focused on the “last‑mile” problem of job hunting: **turning a resume + job description into an actionable application strategy**.
+ApplyFlow AI is an **AI-powered job application optimizer** solving the "last-mile" problem: transform your **resume (CV) + job description** into **actionable strategies**, **personalized recruiter nudges**, and **match scores** via semantic retrieval and LLM analysis.
 
-Today, the repo implements:
+## 📋 Table of Contents
 
-- **CV indexing (PDF → chunks → embeddings → Pinecone)**
-- **Semantic retrieval** of the most relevant resume “experience blocks” for a given job description
-- **LLM coaching output** per retrieved block: a \(1–10\) match score, one-sentence reasoning, and a 2‑sentence recruiter outreach “nudge”
-- A **React Router v7 UI** to upload a CV and search/analyze job descriptions
+- [🔧 Core Architecture](#core-architecture)
+- [🔐 Authentication](#authentication)
+- [🌐 API Layer](#api-layer)
+- [📁 File Handling](#file-handling)
+- [🤖 AI Integration](#ai-integration)
+- [🎨 Frontend](#frontend)
+- [🚀 Deployment](#deployment)
+- [🏗️ Repository Design & Patterns](#repository-design--patterns)
+- [⚡ Quickstart](#quickstart)
+- [🔑 Environment Variables](#environment-variables)
+- [📚 Documentation](#documentation)
+- [🤝 Contributing](#contributing)
 
-## Repository layout
+## 🎯 Overview
+
+| Feature           | Description                                                                        |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| **CV Processing** | PDF upload → text chunking → embeddings → Pinecone storage/retrieval               |
+| **Job Matching**  | Semantic search on chunks, top-k retrieval, LLM scoring (1-10) + reasoning + nudge |
+| **UI**            | Remix/React app for upload, search, match visualization, copy-to-clipboard nudges  |
+| **Automation**    | Nudger service (future: scheduled outreach)                                        |
+
+## Repository Layout
 
 - **`frontend/`**: React Router v7 + Vite + Tailwind UI
 - **`ai_engine/`**: FastAPI backend providing CV indexing + retrieval + LLM orchestration (LangChain)
 - **`nudger/`**: Node/TypeScript service intended for scheduled “nudge” automation (currently a DB connectivity + placeholder scaffold)
 - **`docker-compose.yml`**: local orchestration (frontend + ai_engine + nudger + Postgres)
 
-## How the pieces fit together
+## 🔧 Core Architecture
 
-1. You upload a PDF resume in the UI.
-2. The AI Engine chunks and embeds it, then stores vectors in Pinecone.
-3. When you paste a job description:
-   - The AI Engine retrieves the top \(k\) most similar resume chunks.
-   - For each chunk, an LLM returns structured JSON: `match_score`, `reasoning`, `nudge`.
-4. The UI renders the best match(es) and provides copy-to-clipboard outreach text.
+### 🏗️ High-Level Data Flow (Mermaid Diagram)
 
-## Quickstart (Docker Compose)
+```mermaid
+graph TD
+    A[User Frontend<br/>React/Remix] --> B[PDF Upload]
+    B --> C[FastAPI API Layer<br/>/cv/index-cv]
+    C --> D[File Storage<br/>temp_uploads/]
+    D --> E[Text Chunker]
+    E --> F[Embeddings<br/>HuggingFace]
+    F --> G[Pinecone Vector Store]
 
-1. Create a root `.env` file (git-ignored) with at least the variables in the section below.
-2. Start the stack:
+    H[Job Description Input] --> I[FastAPI /agent/process]
+    I --> J[Retrieval Top-K Chunks]
+    J --> K[Langchain LLM<br/>Groq/OpenAI<br/>Prompts + JSON Output]
+    K --> L[Match Score<br/>Reasoning + Nudge]
+    L --> M[Frontend Render<br/>MatchList/NudgeCard]
 
-```bash
-docker compose up --build
+    N[Nginx Proxy] -.-> A
+    O[Terraform Infra<br/>Postgres/DB] -.-> C
 ```
 
+### 🛠️ Backend Layers (Clean Architecture / Ports & Adapters)
+
+| Layer                | Path                | Responsibility                                                                                                      |
+| -------------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Domain**           | `core/domain/`      | Entities (CV chunks, jobs), Value Objects, Domain Services, Repositories (ports), Exceptions                        |
+| **Application**      | `core/application/` | Use Cases/Services, Ports/Interfaces for infra                                                                      |
+| **Infrastructure**   | `infrastructure/`   | Adapters: db/repositories (SQLAlchemy/Postgres), vector/Pinecone, llm/Langchain, auth/Google+JWT, filestorage/local |
+| **Presentation/API** | `api/`              | FastAPI routes (auth/cv/job), Schemas (Pydantic), Dependencies, Exception Handlers                                  |
+| **Core Utils**       | `core/utils/`       | Text chunker, Security (JWT), Middleware (timing), Config (Pydantic), Container (DI)                                |
+
+## ⚡ Quickstart
+
+1. Clone & `.env` (see [Environment Variables](#environment-variables)).
+2. **Local Dev**:
+   ```bash
+   docker compose -f docker-compose.local.yml up --build
+   ```
 3. Open:
-   - **Frontend**: `http://localhost:5173`
-   - **AI Engine health**: `http://localhost:8000/health`
+   | Service | URL |
+   |---------|-----|
+   | Frontend | http://localhost:5173 |
+   | API Health | http://localhost:8000/health |
+   | Postgres | localhost:5432
 
-## Required environment variables
+See [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) for troubleshooting.
 
-These are read by `ai_engine/` and `nudger/` (Compose loads them via `env_file: .env`).
+## 🔑 Environment Variables
 
-- **`PINECONE_API_KEY`**: required (vector DB)
-- **`PINECONE_INDEX_NAME`**: optional (default: `applyflow-cvs`)
-- **`LLM_PROVIDER`**: optional (`groq` default, or `openai`)
-- **`GROQ_API_KEY`**: required when `LLM_PROVIDER=groq`
-- **`OPENAI_API_KEY`**: required when `LLM_PROVIDER=openai`
-- **`DATABASE_URL`**: required for `nudger/` (e.g. `postgres://allan_admin:password123@db:5432/applyflow_db`)
+Copy `.env.example` (created) to `.env` and fill values. Loaded by docker-compose `env_file: .env`.
 
-The frontend reads:
+**Key Vars**:
+| Var | Purpose |
+|-----|---------|
+| `PINECONE_API_KEY` | Vector DB access |
+| `LLM_PROVIDER`/`GROQ_API_KEY`/`OPENAI_API_KEY` | AI models |
+| `DATABASE_URL` | Postgres (nudger) |
+| `VITE_AI_API_URL` | Backend base URL |
 
-- **`VITE_AI_API_URL`**: the AI Engine base URL (Compose sets it to `http://ai_engine:8000`).
-  - The UI appends paths like `/cv/index-cv` and `/agent/process`.
-  - The FastAPI app is configured with `root_path="/api"` for proxy deployments; using a base like `http://localhost:8000/api` also works.
+## 🔐 Authentication
+
+- **JWT**: `core/security/jwt.py` - Token generation/validation.
+- **Google OAuth**: `infrastructure/auth/google.py`.
+- **Dependencies**: `api/dependencies/user.py`, `core/security/dependencies.py`.
+
+## 🌐 API Layer
+
+FastAPI app (`ai_engine/main.py`):
+
+- **Routes**: `api/routes/auth_routes.py`, `cv_routes.py`, `job_routes.py`.
+- **Schemas**: Pydantic models (`api/schemas/cv_schema.py`, `user_schema.py`, etc.).
+- **Handlers**: `api/exception_handlers.py`.
+- **Health**: `GET /health`.
+- Full spec: [docs/API.md](docs/API.md).
+
+## 📁 File Handling
+
+- **Upload**: Multipart form to `/cv/index-cv` → `infrastructure/filestorage/local_file_storage.py`.
+- **Processing**: `core/utils/text_chunker.py` → PDF text extraction + semantic chunks.
+- **Storage**: `temp_uploads/` (local; extensible to S3).
+
+## 🤖 AI Integration Layer
+
+- **Embeddings**: HuggingFace `all-MiniLM-L6-v2` (dim=384) → `infrastructure/vector/pinecone_vector_store.py`.
+- **Vector Store**: Pinecone index (`applyflow-cvs`), upsert/retrieve.
+- **LLM Orchestration**: `infrastructure/llm/langchain_llm_adapter.py` + `models/prompts.py`.
+- **Providers**: Groq (Llama3) or OpenAI (GPT-4o-mini).
+- **Output**: Structured JSON per chunk: `{score: 1-10, reasoning, nudge}` via `/agent/process`.
+
+## 🎨 Frontend Structure
+
+Remix/React Router v7 + Vite + Tailwind + TypeScript:
+| Part | Path/Details |
+|------|--------------|
+| **Entry** | `app/entry.client.tsx`, `root.tsx`, `routes.ts` |
+| **Routes** | `landing.tsx`, `dashboard_layout.tsx` |
+| **Components** | `UploadForm.tsx`, `MatchList.tsx`, `NudgeCard.tsx`, `Score.tsx` |
+| **Helpers/Hooks** | `useMousePosition.tsx`, API utils, PostHog |
+| **Config** | `vite.config.ts`, `playwright.config.ts`, `vitest.config.ts` |
+
+## 🚀 Deployment Patterns
+
+- **Local**: `docker-compose.local.yml` (frontend:5173, ai_engine:8000, nudger, postgres).
+- **Test/Prod**: `docker-compose.test.prod.yml`.
+- **Proxy**: `nginx/default.conf` (root_path="/api").
+- **Infra**: Terraform (`main.tf`, AWS EC2/SG, user_data.sh provisioning).
+- **Images**: Dockerfiles per service (frontend/, ai_engine/, nudger/).
+
+## 🏗️ Repository Design & Patterns
+
+- **Architecture**: **Clean/Hexagonal** (Ports & Adapters): Domain pure, infra swappable.
+- **DDD**: Rich models/repositories/services (`core/domain/`).
+- **DI**: `core/container.py`.
+- **Config**: `core/config/settings.py` (Pydantic).
+- **DB**: SQLAlchemy + Alembic migrations (`migrations/`).
+- **Testing**: pytest (`requirements_dev.txt`), Vitest/Playwright (frontend/tests/).
+- **Monorepo**: Services + shared docs/terraform/nginx.
+- **CI/CD Ready**: Makefiles, pre-commit.
 
 ## Tech Stack
+
 - **Frontend**: `React Router v7`, `Vite`, `Tailwind CSS`, `TypeScript`
 - **Backend**: `FastAPI`, `LangChain`, `LangChain-Community`
 - **Vector DB**: `Pinecone`
@@ -63,12 +163,21 @@ The frontend reads:
 - **Embeddings**: `HuggingFace (all-MiniLM-L6-v2)`
 - **Database**: `PostgreSQL` (for nudger)
 
-## Documentation
+## 📚 Documentation & Contributing
 
-- **API reference**: `docs/API.md`
-- **Local development guide**: `docs/LOCAL_DEV.md`
-- **Product Requirements Document (PRD)**: `docs/PRD.md`
-- **Technical Design Document (TDD)**: `docs/TDD.md`
-- **Software Design Specification (SDS)**: `docs/SDS.md`
-- **Deployment & Operations Guide (OPS)**: `docs/OPS.md`
+**Docs**:
+| Guide | Link |
+|-------|------|
+| API | [docs/API.md](docs/API.md) |
+| Local Dev | [docs/LOCAL_DEV.md](docs/LOCAL_DEV.md) |
+| Deployment | [docs/OPS.md](docs/OPS.md) |
+| Designs | SDS/TDD/PRD in `docs/` |
 
+**Contribute**:
+
+1. `cp .env.example .env` & edit.
+2. `docker compose up --build`.
+3. Test: `make test` (backend), `npm test` (frontend).
+4. PR: Conventional commits, changelog entry.
+
+**Roadmap**: Multi-CV support, nudger scheduling, analytics dashboard.

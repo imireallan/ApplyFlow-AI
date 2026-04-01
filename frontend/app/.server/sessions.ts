@@ -58,12 +58,12 @@ export async function destroyTokenSession(request: Request) {
   });
 }
 
-/** Get user from request by calling the backend API */
+/** Test-mode bypass: set via Vite `define` config when TEST_MOCK=true */
+const isTestMode = (globalThis as any).__TEST_MODE__ || false;
+
+/** Get user from request — bypasses backend in test mode */
 export async function getUserFromRequest(request: Request) {
-  // Test-mode bypass: when running e2e tests with mock session,
-  // return a mock user without hitting the real backend.
-  // VITE_TEST_MOCK is set in .env.test (loaded by Vite during e2e runs).
-  if (typeof process !== "undefined" && process.env.TEST_MOCK === "true") {
+  if (isTestMode) {
     const token = getAccessToken(request);
     if (token && decodeJwt(token)) {
       return {

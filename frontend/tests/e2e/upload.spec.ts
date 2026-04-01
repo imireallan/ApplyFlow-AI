@@ -6,7 +6,7 @@ test.describe("Upload Page @auth", () => {
 
     await expect(page.getByText(/Upload Your Resume/i)).toBeVisible();
 
-    const fileInput = page.getByTestId("file-input");
+    const fileInput = page.locator('[data-testid="file-input"]');
     await expect(fileInput).toBeVisible();
 
     // Upload button is disabled with no file

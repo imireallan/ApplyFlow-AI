@@ -158,6 +158,20 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
                     <Search size={24} />
                     Search
                   </NavLink>
+                  <NavLink
+                    to="/app/settings"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={({ isActive }) =>
+                      `flex items-center gap-3 p-3 rounded-xl transition-all font-medium text-base ${
+                        isActive
+                          ? "bg-blue-600 text-white shadow-lg shadow-blue-200"
+                          : "text-gray-700 hover:bg-gray-100"
+                      }`
+                    }
+                  >
+                    <Settings size={24} />
+                    Settings
+                  </NavLink>
 
                   <div className="pt-6">
                     <h2 className="text-xs font-black uppercase tracking-widest text-gray-400 mb-4">
@@ -254,8 +268,9 @@ export default function DashboardLayout({ loaderData }: ComponentProps) {
           <Svg />
         </Link>
         <div className="flex flex-col space-y-4 flex-1">
-          <SidebarLink to="/app/upload" icon={<FileUp size={20} />} />
-          <SidebarLink to="/app/search" icon={<Search size={20} />} />
+          <SidebarLink to="/app/upload" icon={<FileUp size={20} />} ariaLabel="Upload" />
+          <SidebarLink to="/app/search" icon={<Search size={20} />} ariaLabel="Search" />
+          <SidebarLink to="/app/settings" icon={<Settings size={20} />} ariaLabel="Settings" />
         </div>
       </nav>
 
@@ -440,10 +455,19 @@ function FeatureNavItem({
   );
 }
 
-function SidebarLink({ to, icon }: { to: string; icon: React.ReactNode }) {
+function SidebarLink({
+  to,
+  icon,
+  ariaLabel,
+}: {
+  to: string;
+  icon: React.ReactNode;
+  ariaLabel?: string;
+}) {
   return (
     <NavLink
       to={to}
+      aria-label={ariaLabel}
       className={({ isActive }) =>
         `p-3 rounded-xl transition-all ${isActive ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "text-gray-400 hover:bg-gray-100"}`
       }

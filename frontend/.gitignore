@@ -5,3 +5,7 @@
 # React Router
 /.react-router/
 /build/
+
+# Test artifacts
+vitest-results.json
+coverage/

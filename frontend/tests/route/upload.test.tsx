@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { redirect } from "react-router";
+import { data, redirect } from "react-router";
 
 import {
   createMultiRouteStub,
@@ -86,20 +86,26 @@ describe("Upload Route", () => {
   });
 
   it("handles API error gracefully", async () => {
-    const ERROR_MESSAGE = "API Error: Server unavailable";
+    const error = { title: "Upload failed", message: "Please try again." }
 
     const Stub = createRouteStubTest("/upload", UploadPage, {
       action: async () => {
-        return { error: ERROR_MESSAGE };
+        return data({ error }, { status: 400 });
       },
     });
 
     render(renderRouteStub(Stub, ["/upload"]));
 
+    const file = new File(["dummy"], "cv.pdf", { type: "application/pdf" });
+    const fileInput = screen.getByTestId("file-input");
+    await user.upload(fileInput, file);
+
     await user.click(screen.getByRole("button", { name: /upload/i }));
 
+    screen.debug()
+
     await waitFor(() => {
-      expect(screen.getByText(ERROR_MESSAGE)).toBeInTheDocument();
+      expect(screen.getByText(error.title)).toBeInTheDocument();
     });
   });
 });

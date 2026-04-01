@@ -13,7 +13,7 @@
     "test:coverage": "vitest run --coverage",
     "playwright": "playwright test",
     "playwright:ui": "playwright test --ui",
-    "playwright:codegen": "playwright codegen localhost:3000",
+    "playwright:codegen": "playwright codegen localhost:5173",
     "test:e2e": "playwright test"
   },
   "dependencies": {

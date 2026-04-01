@@ -50,7 +50,7 @@ describe("UploadForm", () => {
   it("shows error message from props", () => {
     render(
       <UploadForm
-        error="Upload failed"
+        error={{ title: "Upload failed", message: "Please try again." }}
         submit={mockSubmit}
         navigation={mockIdleNavigation}
       />,

@@ -10,7 +10,7 @@ test("user can logout successfully", async ({ page, context }) => {
       email: "test@example.com",
     })
   );
-  const fakeToken = `${header}.${payload}.fakesignature`;
+  const fakeToken=`${header}.${payload}.mock-signature`;
 
   // Set auth cookie so the test-mode bypass in sessions.ts works
   await context.addCookies([

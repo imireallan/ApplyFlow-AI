@@ -18,7 +18,7 @@ setup("authenticate", async ({ page, context }) => {
       picture_url: "https://example.com/avatar.png",
     })
   );
-  const fakeToken = `${header}.${payload}.fakesignature`;
+  const fakeToken=`${header}.${payload}.mock-signature`;
 
   // Set the access_token cookie directly in the browser context
   await context.addCookies([

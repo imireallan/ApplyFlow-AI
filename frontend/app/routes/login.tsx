@@ -16,7 +16,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const url = new URL(request.url);
   const redirectTo = url.searchParams.get("redirectTo") || "/app";
 
-  const token = await getUserToken(request);
+  const token = getUserToken(request);
 
   // 1. If active session exists, bypass login and go to the destination
   if (token && !isTokenExpired(token)) {

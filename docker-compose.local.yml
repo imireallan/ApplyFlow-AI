@@ -27,11 +27,12 @@ services:
       - ./ai_engine:/app
     env_file: .env
     healthcheck:
+      # test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health')"]
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 20s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 40s
     #depends_on:
     #  - db  # Remove hard dependency - uses EXTERNAL_DB_URL or POSTGRES_HOST from env
   # nudger:

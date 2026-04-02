@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from langchain_core.embeddings import Embeddings
-from langchain_huggingface import HuggingFaceInferenceAPIEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 from pinecone.exceptions import NotFoundException, PineconeException
@@ -13,24 +13,26 @@ from core.config.settings import settings
 
 
 class PineconeVectorStoreAdapter(VectorStorePort):
-    """Lazy embeddings — app starts instantly before the first embedding call.
-
-    Now:  HuggingFace Serverless Inference API  (free, zero local memory, no model download)
-    Later: flip EMBEDDING_PROVIDER=openai in .env — everything else stays the same.
-    """
 
     def __init__(self) -> None:
-        print("Pinecone vector store: initializing")
-        # Embeddings are lazy — init_embeddings() runs on first upsert/query.
-        self._embeddings: Embeddings | None = None
-
-        # Pinecone client + index — just API calls, no heavy model loads.
-        pc = Pinecone(api_key=settings.PINECONE_API_KEY)
-        dimension = 384  # all-MiniLM-L6-v2 / HF serverless both output 384-dim vectors
-        index_name = settings.PINECONE_INDEX
+        print("🔥 Initializing vector store ONCE")
+        # Initialize embeddings based on provider
+        if settings.EMBEDDING_PROVIDER == "huggingface":
+            self.embeddings: Embeddings = HuggingFaceEmbeddings(
+                model=settings.HUGGINGFACE_EMBEDDING_MODEL,
+            )
+        else:
+            self.embeddings = OpenAIEmbeddings()
 
         try:
+            pc = Pinecone(api_key=settings.PINECONE_API_KEY)
+
+            dimension = 384
+
+            index_name = settings.PINECONE_INDEX
+
             if index_name not in [i.name for i in pc.list_indexes()]:
+
                 pc.create_index(
                     name=index_name,
                     dimension=dimension,
@@ -44,7 +46,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
         except NotFoundException as e:
             raise HTTPVectorStoreError(
                 detail="Vector store index not found. Please try again later.",
-                log_message=f"Pinecone index not found: {str(e)}",
+                log_message=f"Pinecone index 'applyflow-cv-index' not found: {str(e)}",
             ) from e
         except Exception as e:
             raise HTTPVectorStoreError(
@@ -52,36 +54,13 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                 log_message=f"Failed to connect to Pinecone: {str(e)}",
             ) from e
 
-    # ------------------------------------------------------------------
-    # Lazy-loaded embeddings
-    # ------------------------------------------------------------------
-    def _init_embeddings(self) -> Embeddings:
-        """Create the embeddings provider and cache it."""
-        print(f"Embeddings provider: {settings.EMBEDDING_PROVIDER}")
-        if settings.EMBEDDING_PROVIDER == "huggingface":
-            # Serverless Inference API — hits HF's hosted endpoints,
-            # zero local model download, zero GPU/CPU weight in container.
-            return HuggingFaceInferenceAPIEmbeddings(
-                model=settings.HUGGINGFACE_EMBEDDING_MODEL,
-                api_key=settings.HF_API_TOKEN,
-            )
-        # Paid path — OpenAI (flip EMBEDDING_PROVIDER to "openai" in .env)
-        return OpenAIEmbeddings()
-
-    @property
-    def embeddings(self) -> Embeddings:
-        if self._embeddings is None:
-            self._embeddings = self._init_embeddings()
-        return self._embeddings
-
-    # ------------------------------------------------------------------
-    # VectorStorePort implementation
-    # ------------------------------------------------------------------
     def upsert(
         self, vector_id: str, content: str, user_id: str, cv_id: str
     ) -> dict[str, Any]:
+
         try:
             vector = self.embeddings.embed_query(content)
+
             self.index.upsert(
                 vectors=[
                     {
@@ -96,9 +75,11 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                 ],
                 namespace=user_id,
             )
+
             return {"status": "success"}
 
         except PineconeException as e:
+            # Handle rate limiting (429) and other Pinecone-specific errors
             error_code = getattr(e, "code", None)
             error_str = str(e)
             if error_code == "ratelimit" or "429" in error_str:
@@ -106,11 +87,13 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                     detail="Rate limit exceeded. Please try again later.",
                     log_message=f"Pinecone rate limit exceeded: {error_str}",
                 ) from e
+            # Handle dimension mismatch errors
             if "dimension" in error_str.lower():
                 raise HTTPVectorStoreError(
                     detail="Vector dimension mismatch. Please contact support to recreate the Pinecone index with the correct dimension.",
                     log_message=f"Pinecone dimension mismatch: {error_str}",
                 ) from e
+            # Handle not found errors
             if isinstance(e, NotFoundException):
                 raise HTTPVectorStoreError(
                     detail="Vector store index not found. Please try again later.",
@@ -120,10 +103,9 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                 detail="Vector store operation failed. Please try again later.",
                 log_message=f"Pinecone error: {error_str}",
             ) from e
-        except RuntimeError:
-            raise  # Re-raise HF API errors as-is
         except Exception as e:
             error_str = str(e)
+            # Check for OpenAI quota errors (429)
             if "429" in error_str and "quota" in error_str.lower():
                 raise HTTPVectorStoreError(
                     detail="Embedding service quota exceeded. Please check your plan and billing details.",
@@ -141,6 +123,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
         k: int,
         cv_id: Optional[str] = None,
     ) -> list[MatchSimilarityScore]:
+
         try:
             vector = self.embeddings.embed_query(query)
 
@@ -150,12 +133,14 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                 "namespace": user_id,
                 "include_metadata": True,
             }
+
             if cv_id:
                 query_args["filter"] = {"cv_id": {"$eq": cv_id}}
 
             result = self.index.query(**query_args)
 
             matches: list[MatchSimilarityScore] = []
+
             for match in result.matches:
                 matches.append(
                     MatchSimilarityScore(
@@ -165,6 +150,7 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                         metadata=match.metadata,
                     )
                 )
+
             return matches
 
         except PineconeException as e:
@@ -178,10 +164,9 @@ class PineconeVectorStoreAdapter(VectorStorePort):
                 detail="Vector store query failed. Please try again later.",
                 log_message=f"Pinecone query error: {str(e)}",
             ) from e
-        except RuntimeError:
-            raise  # Re-raise HF API errors as-is
         except Exception as e:
             error_str = str(e)
+            # Check for OpenAI quota errors (429)
             if "429" in error_str and "quota" in error_str.lower():
                 raise HTTPVectorStoreError(
                     detail="Embedding service quota exceeded. Please check your plan and billing details.",

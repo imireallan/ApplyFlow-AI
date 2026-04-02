@@ -71,7 +71,7 @@ pinecone==7.3.0
 pinecone-client==6.0.0
 pinecone-plugin-assistant==1.8.0
 pinecone-plugin-interface==0.0.7
-propcache==0.4.
+propcache==0.4.0
 pydantic
 PyJWT==2.11.0
 pypdf==6.7.0

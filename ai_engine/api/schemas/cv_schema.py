@@ -30,6 +30,8 @@ class CVListResponse(BaseModel):
 class CVResponse(BaseModel):
     data: Cv
     status: str = "success"
+
+
 class CVProfileCreateResponse(BaseModel):
     data: None
     status: str = "success"
@@ -44,6 +46,7 @@ class CvIndex(BaseModel):
 class CVIndexResponse(BaseModel):
     data: CvIndex
     status: str = "success"
+
 
 class CVProfileResponse(BaseModel):
     data: CVProfile | None

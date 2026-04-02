@@ -9,4 +9,5 @@ def chunk_text(text: str) -> list[str]:
         separators=["\n\n", "\n", ".", " ", ""],
     )
 
-    return splitter.split_text(text)
+    result: list[str] = splitter.split_text(text)
+    return result

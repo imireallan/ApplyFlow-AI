@@ -22,7 +22,7 @@ class SQLAlchemyCVProfileRepository(CVProfileRepository, BaseRepository[CVProfil
         orm = (
             self.session.query(CVProfileORM)
             .filter_by(user_id=user_id)
-            .order_by(CVProfileORM.updated_at.desc()) 
+            .order_by(CVProfileORM.updated_at.desc())
             .first()
         )
         return self._to_domain(orm) if orm else None

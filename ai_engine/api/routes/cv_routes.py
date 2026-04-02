@@ -47,7 +47,7 @@ async def list_user_cvs(
     return CVListResponse(data=cv_list_items)
 
 
-@router.post("/index-cv", response_model=CVIndexResponse)  # noqa: misc
+@router.post("/index-cv", response_model=CVIndexResponse)
 async def index_cv(
     current_user: CurrentUser,
     file: UploadFile = File(...),

@@ -25,12 +25,14 @@ class Settings(BaseSettings):
     PINECONE_API_KEY: str = "dev-placeholder"
 
     # Embeddings - Use "openai" or "huggingface" (free)
+    # huggingface mode uses HuggingFace Serverless Inference API (HF_API_TOKEN required)
     # Note: If using HuggingFace, ensure your Pinecone index dimension matches:
     # - all-mpnet-base-v2: 768 dimensions
     # - sentence-transformers/all-MiniLM-L6-v2: 384 dimensions
     # For Pinecone, you may need to create an index with the matching dimension
     EMBEDDING_PROVIDER: str = "huggingface"
     OPENAI_API_KEY: str | None = None
+    HF_API_TOKEN: str = ""
     HUGGINGFACE_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # JWT

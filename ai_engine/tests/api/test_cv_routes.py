@@ -75,6 +75,7 @@ class TestIndexCV:
             )
             assert response.status_code == 200
             data = response.json()
-            assert "cv_id" in data
+            print(data)
+            assert "cv_id" in data['data']
         finally:
             app.dependency_overrides.pop(get_cv_index_service, None)

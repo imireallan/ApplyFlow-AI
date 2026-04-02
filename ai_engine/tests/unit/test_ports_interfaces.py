@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 
 from core.application.models.match import MatchSimilarityScore
-from core.application.ports.vector_store_port import VectorStorePort
 from core.application.ports.llm_port import LLMPort
+from core.application.ports.vector_store_port import VectorStorePort
 
 
 class TestVectorStorePort:

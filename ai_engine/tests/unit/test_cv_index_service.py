@@ -1,6 +1,7 @@
 """Tests for core/application/services/cv_index_service.py"""
 
 from unittest.mock import MagicMock, patch
+
 import pytest
 
 from core.application.services.cv_index_service import CVIndexService

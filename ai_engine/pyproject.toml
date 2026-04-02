@@ -17,6 +17,7 @@ python_version = "3.11"
 strict = false
 ignore_missing_imports = true
 show_error_codes = true
+exclude = [".venv/", "migrations/"]
 check_untyped_defs = false
 disallow_subclassing_any = false
 plugins = ['pydantic.mypy']

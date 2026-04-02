@@ -1,6 +1,6 @@
 """Shared test fixtures for ai_engine tests."""
 
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 from uuid import UUID, uuid4
 
 import pytest

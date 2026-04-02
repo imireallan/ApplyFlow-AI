@@ -1,5 +1,5 @@
-from core.application.ports.vector_store_port import VectorStorePort
 from core.application.ports.llm_port import LLMPort
+from core.application.ports.vector_store_port import VectorStorePort
 
 
 class AppContainer:

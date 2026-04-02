@@ -28,6 +28,7 @@ class TestCVProfile:
     def test_create_profile_minimal(self):
         profile = CVProfile(
             id=uuid4(),
+            cv_id=uuid4(),
             user_id=uuid4(),
             name="John Doe",
             summary="Profile text",
@@ -40,6 +41,7 @@ class TestCVProfile:
     def test_create_profile_full(self):
         profile = CVProfile(
             id=uuid4(),
+            cv_id=uuid4(),
             user_id=uuid4(),
             name="John Doe",
             skills=["Python", "FastAPI"],

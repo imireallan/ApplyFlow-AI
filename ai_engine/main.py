@@ -43,8 +43,8 @@ def check_migration_status() -> bool:
                 text(
                     """
                 SELECT EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
+                    SELECT FROM information_schema.tables
+                    WHERE table_schema = 'public'
                     AND table_name = 'alembic_version'
                 )
             """

@@ -229,3 +229,6 @@ frontend/*.local
 /playwright/.cache/
 /playwright/.auth/
 
+junit.xml
+uv.lock
+

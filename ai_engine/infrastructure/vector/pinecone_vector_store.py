@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_core.embeddings import Embeddings
-from langchain_huggingface import HuggingFaceInferenceAPIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from pinecone import Pinecone, ServerlessSpec
 from pinecone.exceptions import NotFoundException, PineconeException
@@ -61,10 +61,11 @@ class PineconeVectorStoreAdapter(VectorStorePort):
         if settings.EMBEDDING_PROVIDER == "huggingface":
             # Serverless Inference API — hits HF's hosted endpoints,
             # zero local model download, zero GPU/CPU weight in container.
-            return HuggingFaceInferenceAPIEmbeddings(
+            return HuggingFaceEndpointEmbeddings(
                 model=settings.HUGGINGFACE_EMBEDDING_MODEL,
-                api_key=settings.HF_API_TOKEN,
+                huggingfacehub_api_token=settings.HF_API_KEY,
             )
+        
         # Paid path — OpenAI (flip EMBEDDING_PROVIDER to "openai" in .env)
         return OpenAIEmbeddings()
 

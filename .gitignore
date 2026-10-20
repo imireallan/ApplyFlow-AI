@@ -231,4 +231,5 @@ frontend/*.local
 
 junit.xml
 uv.lock
+workflows/
 

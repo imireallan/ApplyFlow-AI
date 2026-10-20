@@ -1,24 +1,13 @@
-resource "aws_security_group" "applyflow_sg" {
-  name = "applyflow_sg"
+# GCP firewall rules (replaces AWS security_group)
+resource "google_compute_firewall" "applyflow" {
+  name    = "applyflow-firewall"
+  network = "default"
 
-  ingress {
-    from_port = 80
-    to_port   = 80
-    protocol  = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+  allow {
+    protocol = "tcp"
+    ports    = ["22", "80", "5173", "5432", "8000"]
   }
 
-  ingress {
-    from_port = 22
-    to_port   = 22
-    protocol  = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port = 0
-    to_port = 0
-    protocol = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["applyflow"]
 }

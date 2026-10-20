@@ -1,55 +1,28 @@
-# Get latest Amazon Linux 2023 AMI
-data "aws_ami" "amazon_linux" {
-  most_recent = true
-  owners      = ["amazon"]
+# GCP Compute Engine instance (e2-micro, free tier)
+resource "google_compute_instance" "applyflow" {
+  name         = "applyflow-server"
+  machine_type = "e2-micro"
+  zone         = "us-central1-a"
 
-  filter {
-    name   = "name"
-    values = ["al2023-ami-*-x86_64"]
-  }
-}
+  tags = ["applyflow", "http-server", "https-server"]
 
-# EC2 instance
-resource "aws_instance" "applyflow" {
-  ami           = data.aws_ami.amazon_linux.id
-  instance_type = var.instance_type
-
-  key_name = var.key_name
-
-  root_block_device {
-    volume_size = 30
-    volume_type = "gp3"
+  boot_disk {
+    initialize_params {
+      image = "debian-cloud/debian-12"
+      size  = 10
+    }
   }
 
-  vpc_security_group_ids = [
-    aws_security_group.applyflow_sg.id
-  ]
+  network_interface {
+    network = "default"
+    access_config {}
+  }
 
-  user_data = templatefile("${path.module}/user_data.sh", {
+  metadata_startup_script = templatefile("${path.module}/user_data.sh", {
     repo_url = var.repo_url
   })
 
-  tags = {
-    Name = "applyflow-server"
+  metadata = {
+    enable-oslogin = "FALSE"
   }
-}
-
-# Static Public IP
-resource "aws_eip" "applyflow_ip" {
-  domain = "vpc"
-
-  tags = {
-    Name = "applyflow-ip"
-  }
-}
-
-# Attach Elastic IP to instance
-resource "aws_eip_association" "applyflow_ip_assoc" {
-  instance_id   = aws_instance.applyflow.id
-  allocation_id = aws_eip.applyflow_ip.id
-}
-
-# Output static IP
-output "applyflow_public_ip" {
-  value = aws_eip.applyflow_ip.public_ip
 }

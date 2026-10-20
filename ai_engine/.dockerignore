@@ -5,3 +5,8 @@ temp_uploads/
 .git
 .env
 .env.production
+
+.venv
+.pytest_cache
+.mypy_cache
+notebooks

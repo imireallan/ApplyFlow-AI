@@ -1,5 +1,7 @@
 from functools import cached_property, lru_cache
+from typing import Literal
 
+from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,12 +9,10 @@ class Settings(BaseSettings):
     # Environment
     ENV: str = "development"
 
-    # Database - Support both local (POSTGRES_*) and external/Cloud (EXTERNAL_DB_URL)
-    # For AWS RDS or other external DB, set EXTERNAL_DB_URL directly
-    # For local development, use POSTGRES_* vars (defaults to localhost)
-    EXTERNAL_DB_URL: str | None = (
-        None  # Full connection URL (takes precedence over POSTGRES_*)
-    )
+    # Database - supports both local (POSTGRES_*) and external/cloud (EXTERNAL_DB_URL).
+    # For AWS RDS or another external DB, set EXTERNAL_DB_URL directly.
+    # For local development, use POSTGRES_* vars (defaults to localhost).
+    EXTERNAL_DB_URL: str | None = None  # Takes precedence over POSTGRES_*
     DB_SSL_MODE: str | None = None
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = "password123"
@@ -20,18 +20,24 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: int = 5432
 
+    # Pinecone
     PINECONE_INDEX_NAME_DEV: str = "applyflow-dev"
     PINECONE_INDEX_NAME_PROD: str = "applyflow-prod"
     PINECONE_API_KEY: str = "dev-placeholder"
+    PINECONE_CLOUD: str = "aws"
+    PINECONE_REGION: str = "us-east-1"
 
-    # Embeddings - Use "openai" or "huggingface" (free)
-    # Note: If using HuggingFace, ensure your Pinecone index dimension matches:
-    # - all-mpnet-base-v2: 768 dimensions
-    # - sentence-transformers/all-MiniLM-L6-v2: 384 dimensions
-    # For Pinecone, you may need to create an index with the matching dimension
-    EMBEDDING_PROVIDER: str = "huggingface"
+    # Embeddings: "fastembed" (local, ONNX, no torch) or "openai".
+    # The Pinecone index dimension must match the model. The adapter checks this at startup.
+    #   sentence-transformers/all-MiniLM-L6-v2 -> 384
+    #   BAAI/bge-small-en-v1.5                 -> 384
+    EMBEDDING_PROVIDER: Literal["fastembed", "openai"] = "fastembed"
+    EMBEDDING_MODEL: str = Field(
+        default="sentence-transformers/all-MiniLM-L6-v2",
+        # keeps an existing .env with HUGGINGFACE_EMBEDDING_MODEL working
+        validation_alias=AliasChoices("EMBEDDING_MODEL", "HUGGINGFACE_EMBEDDING_MODEL"),
+    )
     OPENAI_API_KEY: str | None = None
-    HUGGINGFACE_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
 
     # JWT
     JWT_SECRET: str = "dev-secret-change-in-production"
@@ -51,20 +57,32 @@ class Settings(BaseSettings):
         env_file=".env", env_file_encoding="utf-8", case_sensitive=True, extra="ignore"
     )
 
+    @field_validator("EMBEDDING_PROVIDER", mode="before")
+    @classmethod
+    def _legacy_provider(cls, v: str) -> str:
+        # "huggingface" used to be the local provider; fastembed replaces it
+        return "fastembed" if v == "huggingface" else v
+
+    @model_validator(mode="after")
+    def _reject_dev_defaults_in_prod(self) -> "Settings":
+        if self.ENV == "production":
+            if self.JWT_SECRET == "dev-secret-change-in-production":
+                raise ValueError("JWT_SECRET must be set in production")
+            if not self.EXTERNAL_DB_URL and self.POSTGRES_PASSWORD == "password123":
+                raise ValueError(
+                    "Set EXTERNAL_DB_URL or POSTGRES_PASSWORD in production"
+                )
+        return self
+
     @cached_property
     def DATABASE_URL(self) -> str:
-        if self.EXTERNAL_DB_URL:
-            url = self.EXTERNAL_DB_URL
-        else:
-            url = (
-                f"postgresql+psycopg2://"
-                f"{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
-                f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
-            )
-
+        url = self.EXTERNAL_DB_URL or (
+            f"postgresql+psycopg2://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}"
+            f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
+        )
         if self.DB_SSL_MODE:
-            url = f"{url}?sslmode={self.DB_SSL_MODE}"
-
+            sep = "&" if "?" in url else "?"
+            url = f"{url}{sep}sslmode={self.DB_SSL_MODE}"
         return url
 
     @cached_property
